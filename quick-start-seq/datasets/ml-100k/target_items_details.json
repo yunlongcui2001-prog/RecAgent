@@ -1,0 +1,62 @@
+[
+    {
+        "item_id": 993,
+        "category": "LOW-FREQUENCY",
+        "interactions": 9,
+        "percentage": 0.01012191281659094
+    },
+    {
+        "item_id": 1211,
+        "category": "LOW-FREQUENCY",
+        "interactions": 7,
+        "percentage": 0.00787259885734851
+    },
+    {
+        "item_id": 1285,
+        "category": "LOW-FREQUENCY",
+        "interactions": 4,
+        "percentage": 0.004498627918484862
+    },
+    {
+        "item_id": 1243,
+        "category": "LOW-FREQUENCY",
+        "interactions": 4,
+        "percentage": 0.004498627918484862
+    },
+    {
+        "item_id": 883,
+        "category": "LOW-FREQUENCY",
+        "interactions": 7,
+        "percentage": 0.00787259885734851
+    },
+    {
+        "item_id": 1170,
+        "category": "RANDOM",
+        "interactions": 6,
+        "percentage": 0.006747941877727293
+    },
+    {
+        "item_id": 619,
+        "category": "RANDOM",
+        "interactions": 69,
+        "percentage": 0.07760133159386387
+    },
+    {
+        "item_id": 834,
+        "category": "RANDOM",
+        "interactions": 12,
+        "percentage": 0.013495883755454586
+    },
+    {
+        "item_id": 547,
+        "category": "RANDOM",
+        "interactions": 134,
+        "percentage": 0.15070403526924286
+    },
+    {
+        "item_id": 379,
+        "category": "RANDOM",
+        "interactions": 85,
+        "percentage": 0.09559584326780332
+    }
+]

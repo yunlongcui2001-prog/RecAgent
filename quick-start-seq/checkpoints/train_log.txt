@@ -1,0 +1,11 @@
+Namespace(seed=42, epochs=1, batch_size=256, embed_dim=128, lr=0.001, gpu='0', device=device(type='cpu'))
+Epoch   1 | loss=7.2970 | val hit@5=3.62%  ndcg@5=2.17%  hit@10=6.58%
+  ✓ Best model saved → ./checkpoints/gru4rec_best.ckpt
+
+── Final Test ──────────────────────────────────────────
+  hit@10: 2.74%
+  hit@20: 5.45%
+  hit@5: 1.27%
+  ndcg@10: 1.26%
+  ndcg@20: 1.94%
+  ndcg@5: 0.79%

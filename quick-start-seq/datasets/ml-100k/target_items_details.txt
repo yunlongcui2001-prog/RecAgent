@@ -1,0 +1,15 @@
+Detailed target item information:
+============================================================
+Item ID    Category        Interactions    Percentage
+------------------------------------------------------------
+993        LOW-FREQUENCY   9               0.0101%
+1211       LOW-FREQUENCY   7               0.0079%
+1285       LOW-FREQUENCY   4               0.0045%
+1243       LOW-FREQUENCY   4               0.0045%
+883        LOW-FREQUENCY   7               0.0079%
+1170       RANDOM          6               0.0067%
+619        RANDOM          69              0.0776%
+834        RANDOM          12              0.0135%
+547        RANDOM          134             0.1507%
+379        RANDOM          85              0.0956%
+============================================================
