@@ -1,6 +1,0 @@
-{
-  "task_id": "t1",
-  "attempt": 1,
-  "test_stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.11.5, pytest-7.4.0, pluggy-1.0.0 -- E:\\anaconda\\anaconda\\python.exe\ncachedir: .pytest_cache\nrootdir: F:\\RecAgent\nplugins: anyio-3.5.0\ncollecting ... collected 2 items\n\nexperiments/orch-test-001/code/test_calc.py::test_add PASSED             [ 50%]\nexperiments/orch-test-001/code/test_calc.py::test_multiply PASSED        [100%]\n\n============================== 2 passed in 0.02s ==============================",
-  "test_exit_code": 0
-}

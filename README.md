@@ -11,6 +11,9 @@ RecAgent/
 │   ├── hp_rules/       # 结构化调参规则（YAML，供 Agent 直接解析）
 │   └── paper_insights/ # 论文提炼（每篇论文一个文件）
 ├── graphify-out/       # 知识图谱（由 /graphify 自动生成，勿手动修改）
+├── .claude/agents/     # Coder 子系统：orchestrator / executor / checker 三个 subagent
+├── experiments/        # 每次运行的 tasks.json + status.json + 产物（.gitignore）
+├── scripts/            # 共享脚本（status_update.py 等）
 ├── skills/             # AI Agent Skill 定义
 ├── templates/          # 实验配置模板
 ├── tools/              # 共享工具脚本（Claude Code 状态栏等）
