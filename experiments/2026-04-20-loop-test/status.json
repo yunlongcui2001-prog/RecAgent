@@ -1,0 +1,14 @@
+{
+  "loop_id": "2026-04-20-loop-test",
+  "controller_round": 1,
+  "smoke_round": 0,
+  "tasks_total": 3,
+  "tasks": [
+    { "id": "t1", "unit_test": false, "verdict": "pending", "checker_rounds": 0 },
+    { "id": "t2", "unit_test": false, "verdict": "pending", "checker_rounds": 0 },
+    { "id": "t3", "unit_test": false, "verdict": "pending", "checker_rounds": 0 }
+  ],
+  "all_units_pass": false,
+  "smoke_test": false,
+  "overall_complete": false
+}

@@ -202,6 +202,57 @@ Coder 被 Controller 调用时有两种 mode，但**复用同一个 orchestrator
 - `overall_complete: false → true` 需 `smoke_test==true`
 - `tasks` 数组的长度和 `id` 集合必须与 `tasks.json` 一致，不允许增删
 
+### 3.4.1 `scripts/status_update.py` 实现规范
+
+orchestrator **禁止直接 Write status.json**，所有变更必须通过此 CLI，将 append-forward-only 不变量从 prompt 约束升级为机械强制。
+
+#### CLI 接口
+
+```
+python scripts/status_update.py init       --loop-id ID --controller-round N --tasks-json PATH
+python scripts/status_update.py mark-task  --loop-id ID --task-id TID --verdict VERDICT --checker-rounds K
+python scripts/status_update.py mark-smoke --loop-id ID
+python scripts/status_update.py reset      --loop-id ID
+python scripts/status_update.py bump-round --loop-id ID
+python scripts/status_update.py get        --loop-id ID
+```
+
+#### 各命令语义与校验
+
+| 命令 | 作用 | 校验（失败则非零退出，不写文件） |
+|---|---|---|
+| `init` | 从 tasks.json 创建 status.json，全部字段初始化为 false / pending / 0 | tasks.json 存在且可读 |
+| `mark-task` | 将指定 task 标为 `unit_test=true, verdict=real_impl` | verdict 必须是 `"real_impl"`；task_id 必须在 status["tasks"] 里；已是 true 则幂等放行 |
+| `mark-smoke` | 标 `smoke_test=true, overall_complete=true` | `all_units_pass` 必须已为 true |
+| `reset` | 批量回滚所有 task 到 `unit_test=false, verdict=pending`，清 smoke_test / overall_complete | **唯一合法的 false 回滚入口**；smoke_round 不动 |
+| `bump-round` | `smoke_round += 1` | 无额外校验 |
+| `get` | 打印当前 status.json 到 stdout | — |
+
+#### 派生字段规则
+
+每次写入前脚本自动重算，不由调用方传入：
+
+```
+all_units_pass    = all(t["unit_test"] for t in status["tasks"])
+overall_complete  = smoke_test and all_units_pass
+```
+
+#### task ID 锚定规则
+
+- `init` 时从 tasks.json 读取 task ID 列表，写入 status["tasks"]
+- 后续所有命令按 **status["tasks"] 里的 ID 集合**校验，tasks.json 被改动不影响已初始化的 status
+- `mark-task` 收到未知 task_id 时非零退出
+
+#### 运行目录约定
+
+所有路径相对 repo root（`Path("experiments") / loop_id / "status.json"`）。调用方（orchestrator）负责从 repo root 执行此脚本。
+
+#### 实现要点
+
+- `--verdict` 参数不限定 choices，内部校验 `!= "real_impl"` 即拒绝（保留扩展空间）
+- 写文件前先完整构造新 status dict，校验通过后一次性写入（避免半写状态）
+- 每次写入自动追加 `updated_at`（ISO 8601 UTC），`init` 额外写 `created_at`
+
 ### 3.5 权限与作用域
 
 | Subagent | Read 范围 | Write 范围 | Bash 允许 |

@@ -1,0 +1,37 @@
+{
+  "loop_id": "2026-04-20-loop-test",
+  "controller_round": 1,
+  "mode": "implement",
+  "base_commit": "259c2a952a414a824e8c8475b26d683975af7587",
+  "tasks": [
+    {
+      "id": "t1",
+      "op": "create",
+      "path": "quick-start-seq/tests/test_gru4rec.py",
+      "spec": "1. 在文件顶部 import sys, os, torch, pytest，并将 quick-start-seq 加入 sys.path。\n2. 写 test_sum_pooling()：构造 B=4、seq_len=10、n_items=50、embed_dim=32 的 GRU4REC(pooling='sum')，forward 后断言 scores.shape==(4,51)、session_rep.shape==(4,32)。\n3. 写 test_last_pooling_shape()：同上但 pooling='last'，断言同样的 shape。\n4. 写 test_last_pooling_values()：x_lens=[3,1,2]，B=3，手动对 GRU 输出做 pack/pad，断言 pooling='last' 的 session_rep[i] 等于序列第 x_lens[i]-1 位的输出（用 atol=1e-5 比较）。\n5. 写 test_dropout_effect()：GRU4REC(dropout=0.5)，model.train() 下两次 forward 结果不同，model.eval() 下两次 forward 结果相同。\n6. 写 test_padded_no_exception()：x_lens=[5,3,1,7]，forward 不抛异常。\n7. 所有 test 仅用 CPU，不读取任何数据文件。",
+      "test_cmd": "cd quick-start-seq && python -m pytest tests/test_gru4rec.py --collect-only -q"
+    },
+    {
+      "id": "t2",
+      "op": "modify",
+      "path": "quick-start-seq/models/GRU4REC.py",
+      "spec": "1. 在 __init__ 签名末尾加两个参数：pooling: str = 'sum'、dropout: float = 0.0。\n2. 在 __init__ 中添加 self.pooling = pooling 和 self.dropout_layer = nn.Dropout(dropout)。\n3. 在 forward 的 pad_packed_sequence 之后，删除原有两行 torch.sum：改为若 self.pooling == 'sum' 则 pooled = torch.sum(x, 1)；否则用列表推导 pooled = torch.stack([x[i, lens[i]-1, :] for i in range(len(lens))])，其中 lens = x_lens.tolist()（注意 x_lens 已在前面转为 tensor，需先 .tolist()）。\n4. pooled 过 self.dropout_layer。\n5. session_rep = self.output_layer(pooled)。\n6. scores = self.score_layer(session_rep)（原代码错误地将 torch.sum 直接送入 score_layer，改为用 session_rep）。\n7. return session_rep, scores，签名不变。",
+      "test_cmd": "cd quick-start-seq && python -m pytest tests/test_gru4rec.py -v"
+    },
+    {
+      "id": "t3",
+      "op": "modify",
+      "path": "quick-start-seq/train_model.py",
+      "spec": "1. 在 argparse 块末尾新增三个参数：--pooling（type=str，default='sum'，choices=['sum','last']）、--dropout（type=float，default=0.0）。\n2. 在 train() 函数中找到实例化 GRU4REC 的那一行，加入 pooling=args.pooling, dropout=args.dropout 两个关键字参数。\n3. 将 CKPT_DIR + 'gru4rec_best.ckpt' 改为 CKPT_DIR + f'gru4rec_{args.pooling}_best.ckpt'（共两处：save 和 load）。\n4. 在 log(str(args)) 之前加一行 log(f'model=GRU4REC pooling={args.pooling} dropout={args.dropout}')。\n5. 不修改 SequenceDataLoader、evaluate、hit_ratio、ndcg 任何函数。",
+      "test_cmd": "cd quick-start-seq && python train_model.py --help | grep -E 'pooling|dropout'"
+    }
+  ],
+  "success_criteria": {
+    "smoke_cmd": "cd quick-start-seq && python -m pytest tests/test_gru4rec.py -v && bash scripts/run.sh --epochs 1 --batch_size 64 --pooling last --dropout 0.2",
+    "asserts": [
+      "pytest exit code == 0",
+      "run.sh stdout 含 'hit@5'",
+      "run.sh exit code == 0"
+    ]
+  }
+}

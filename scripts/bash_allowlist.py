@@ -34,18 +34,34 @@ BASH_ALLOW: dict[str, list[str]] = {
         r"^bash scripts/run\.sh(\s|$)",
         # status_update CLI
         r"^python\s+scripts/status_update\.py\b",
-        # Generic python for small helpers
-        r"^python(\s|$)",
+        # Restricted python invocations (no `-c` arbitrary code execution)
+        r"^python\s+scripts/\S+\.py\b",
+        r"^python\s+-m\s+pytest\b",
+        r"^python\s+-V\s*$",
         # Safe inspection
         r"^(ls|cat|pwd)(\s|$)",
     ],
     "coder-executor": [
-        r"^python(\s|$)",
+        r"^python\s+scripts/\S+\.py\b",
+        r"^python\s+-m\s+pytest\b",
+        r"^python\s+-V\s*$",
         r"^pytest(\s|$)",
         r"^(ls|cat|pwd)(\s|$)",
     ],
     # coder-checker: no Bash at all
 }
+
+# Shell metacharacters that enable command chaining / redirection / substitution.
+# Any of these in a command means reject outright — Coder subagents never need
+# chaining; every allowlisted command is single-stage.
+_SHELL_METACHARS = re.compile(r"[;&|`$><]|\$\(")
+
+
+def has_shell_chaining(command: str) -> bool:
+    """True if command contains shell metachars that could chain commands
+    or redirect I/O. This is overly conservative but safe: the Coder subagents
+    never legitimately need chaining; all allowed commands are single-stage."""
+    return bool(_SHELL_METACHARS.search(command))
 
 # file_path prefix -> allowed subagents (earliest match wins)
 WRITE_ALLOW: list[tuple[re.Pattern[str], set[str]]] = [
@@ -65,7 +81,8 @@ WRITE_ALLOW: list[tuple[re.Pattern[str], set[str]]] = [
 
 def detect_subagent(event: dict) -> str | None:
     """Derive the calling subagent from the transcript path filename."""
-    transcript = event.get("transcript_path", "")
+    # Normalize Windows backslashes so PurePosixPath splits correctly.
+    transcript = event.get("transcript_path", "").replace("\\", "/")
     name = PurePosixPath(transcript).name  # e.g. 'coder-executor-abc.jsonl'
     # Longest match first so 'coder-executor' beats 'coder'
     for candidate in ("coder-executor", "coder-checker", "coder"):
@@ -84,6 +101,8 @@ def detect_subagent(event: dict) -> str | None:
 def check_bash(agent: str | None, command: str) -> tuple[bool, str]:
     if agent is None:
         return True, "non-coder caller; pass through"
+    if has_shell_chaining(command):
+        return False, f"subagent '{agent}' command contains shell metachars: {command!r}"
     patterns = BASH_ALLOW.get(agent, [])
     if not patterns:
         return False, f"subagent '{agent}' is not allowed to run Bash"
@@ -96,15 +115,16 @@ def check_bash(agent: str | None, command: str) -> tuple[bool, str]:
 def check_write(agent: str | None, file_path: str) -> tuple[bool, str]:
     if agent is None:
         return True, "non-coder caller; pass through"
-    # Normalize to forward slashes + strip any repo-root prefix for matching
+    # Normalize and reject path traversal
     normalized = file_path.replace("\\", "/")
+    if ".." in normalized.split("/"):
+        return False, f"'{agent}' path contains '..' traversal: {file_path}"
     for pattern, allowed_agents in WRITE_ALLOW:
         if pattern.search(normalized):
             if agent in allowed_agents:
                 return True, f"path matched {pattern.pattern!r}"
-            return False, f"'{agent}' cannot write path matching {pattern.pattern!r}"
-    # Default deny: Coder subagents can only write inside experiments/<id>/
-    return False, f"'{agent}' attempted write outside experiments/: {file_path}"
+            return False, f"'{agent}' has no rule permitting write of {file_path}"
+    return False, f"'{agent}' has no rule permitting write of {file_path}"
 
 
 # ---------- Main ----------
@@ -113,8 +133,8 @@ def main() -> int:
     try:
         event = json.load(sys.stdin)
     except json.JSONDecodeError as e:
-        print(f"hook error: invalid JSON on stdin: {e}", file=sys.stderr)
-        return 0  # fail open if event is malformed (don't brick Claude Code)
+        print(f"HOOK MISCONFIGURED: invalid JSON on stdin: {e}", file=sys.stderr)
+        return 2
 
     tool = event.get("tool_name", "")
     agent = detect_subagent(event)

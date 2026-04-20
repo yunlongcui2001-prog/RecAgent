@@ -66,7 +66,7 @@ def test_orchestrator_denied_rm_rf():
 def test_executor_allowed_python():
     event = {
         "tool_name": "Bash",
-        "tool_input": {"command": "python -c 'from models.LSTM4REC import LSTM4REC'"},
+        "tool_input": {"command": "python scripts/run.py --epochs 1"},
         "cwd": "/repo/experiments/loop-001/code",
         "transcript_path": "/sessions/subagents/coder-executor-abc.jsonl",
     }
@@ -157,3 +157,73 @@ def test_read_tool_always_allowed():
         "transcript_path": "/sessions/subagents/coder-abc.jsonl",
     }
     assert run_hook(event).returncode == 0
+
+
+# --- Adversarial tests (C1, C2, I1, C3) ---
+
+def test_executor_denied_command_chaining_semicolon():
+    event = {
+        "tool_name": "Bash",
+        "tool_input": {"command": "python -V ; git push"},
+        "cwd": "/repo/experiments/loop-001/code",
+        "transcript_path": "/sessions/subagents/coder-executor-abc.jsonl",
+    }
+    assert run_hook(event).returncode != 0
+
+
+def test_executor_denied_command_chaining_ampersand():
+    event = {
+        "tool_name": "Bash",
+        "tool_input": {"command": "python -V && rm -rf experiments/"},
+        "cwd": "/repo/experiments/loop-001/code",
+        "transcript_path": "/sessions/subagents/coder-executor-abc.jsonl",
+    }
+    assert run_hook(event).returncode != 0
+
+
+def test_executor_denied_python_dash_c():
+    event = {
+        "tool_name": "Bash",
+        "tool_input": {"command": "python -c \"import os; os.system('git push')\""},
+        "cwd": "/repo/experiments/loop-001/code",
+        "transcript_path": "/sessions/subagents/coder-executor-abc.jsonl",
+    }
+    assert run_hook(event).returncode != 0
+
+
+def test_windows_transcript_path_detected():
+    """On Windows, transcript_path may use backslashes. Detection must still work."""
+    event = {
+        "tool_name": "Bash",
+        "tool_input": {"command": "git push"},
+        "cwd": "C:\\repo\\experiments\\loop-001\\code",
+        "transcript_path": "C:\\sessions\\subagents\\coder-executor-abc.jsonl",
+    }
+    # Should be detected as executor and denied (executor can't run git)
+    result = run_hook(event)
+    assert result.returncode != 0
+    assert "executor" in result.stderr.lower()
+
+
+def test_executor_denied_path_traversal():
+    event = {
+        "tool_name": "Write",
+        "tool_input": {"file_path": "/repo/experiments/loop-001/code/../../tasks.json", "content": "{}"},
+        "cwd": "/repo/experiments/loop-001/code",
+        "transcript_path": "/sessions/subagents/coder-executor-abc.jsonl",
+    }
+    result = run_hook(event)
+    assert result.returncode != 0
+    assert ".." in result.stderr or "traversal" in result.stderr.lower()
+
+
+def test_malformed_json_fails_closed():
+    """Empty/malformed stdin must deny, not allow (fail-closed)."""
+    result = subprocess.run(
+        [sys.executable, str(HOOK)],
+        input="{not valid json",
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert "HOOK MISCONFIGURED" in result.stderr
