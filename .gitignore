@@ -211,3 +211,7 @@ private/
 
 # Claude Code: personal overrides (team-shared config lives in .claude/settings.json)
 .claude/settings.local.json
+
+# RecAgent experiment artifacts: track artifacts, ignore worktree code checkouts
+experiments/*/code/
+!experiments/.gitkeep
