@@ -1,0 +1,25 @@
+dataset:
+  name: beauty
+  raw_path: data/raw/reviews_Beauty_5.json.gz
+  processed_dir: data/processed/beauty
+  max_seq_len: 50
+  num_eval_negatives: 99
+
+model:
+  embed_dim: 64
+  ffn_hidden_dim: 64
+  num_blocks: 2
+  dropout: 0.2
+
+training:
+  batch_size: 256
+  learning_rate: 1.0e-3
+  optimizer: adam
+  max_epochs: 200
+  early_stop_patience: 10
+  early_stop_metric: val_mrr
+  early_stop_mode: max
+  seed: 42
+
+eval:
+  topk: [1, 5, 10]
