@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fmlp-rec"
+version = "0.1.0"
+description = "FMLP-Rec (WWW'22) reproduction from paper text only — no reference to the official repo."
+requires-python = ">=3.10"
+authors = [{ name = "yunlongcui2001 + Claude" }]
+
+dependencies = [
+    "torch>=2.2,<3",
+    "lightning>=2.2,<3",
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "pyyaml>=6.0",
+    "tqdm>=4.65",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
