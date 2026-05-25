@@ -23,11 +23,12 @@ def load_jsonl(path: Path) -> list[dict]:
 
 class FMLPTrainDataset(Dataset):
     def __init__(self, records: list[dict], num_items: int, max_seq_len: int, seed: int = 42):
-        self.instances: list[tuple[list[int], int]] = []
+        self.instances: list[tuple[list[int], int, set[int]]] = []
         for rec in records:
             seq = rec["train_seq"]
+            seen = set(seq)
             for t in range(1, len(seq)):
-                self.instances.append((seq[:t], seq[t]))
+                self.instances.append((seq[:t], seq[t], seen))
         self.num_items = num_items
         self.max_seq_len = max_seq_len
         self.rng = random.Random(seed)
@@ -36,10 +37,10 @@ class FMLPTrainDataset(Dataset):
         return len(self.instances)
 
     def __getitem__(self, idx: int) -> dict:
-        history, target = self.instances[idx]
+        history, target, seen = self.instances[idx]
         input_seq = pad_and_truncate(history, self.max_seq_len)
         neg = self.rng.randint(1, self.num_items)
-        while neg == target:
+        while neg == target or neg in seen:
             neg = self.rng.randint(1, self.num_items)
         return {
             "input_seq": torch.tensor(input_seq, dtype=torch.long),

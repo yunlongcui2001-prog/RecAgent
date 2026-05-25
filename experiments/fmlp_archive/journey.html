@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>FMLP-Rec 复现 · 过程档案</title>
+<style>
+  :root {
+    --fg: #1a1a1a;
+    --muted: #666;
+    --border: #d0d7de;
+    --bg: #ffffff;
+    --bg-soft: #f6f8fa;
+    --accent: #0969da;
+    --warn: #bf8700;
+    --ok: #1a7f37;
+    --bad: #cf222e;
+  }
+  html { font-size: 15.5px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    max-width: 880px;
+    margin: 2.5rem auto;
+    padding: 0 1.5rem 4rem;
+    line-height: 1.65;
+  }
+  h1 { font-size: 1.7rem; border-bottom: 2px solid var(--border); padding-bottom: .4rem; margin-top: 2.2rem; }
+  h2 { font-size: 1.25rem; margin-top: 2.4rem; border-bottom: 1px solid var(--border); padding-bottom: .3rem; }
+  h3 { font-size: 1.05rem; margin-top: 1.8rem; }
+  blockquote {
+    border-left: 4px solid var(--accent);
+    background: var(--bg-soft);
+    margin: 1rem 0;
+    padding: .75rem 1rem;
+    color: #333;
+    border-radius: 0 6px 6px 0;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-size: .92rem;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: .5rem .7rem;
+    vertical-align: top;
+    text-align: left;
+  }
+  th { background: var(--bg-soft); font-weight: 600; }
+  td.num { white-space: nowrap; width: 3.5rem; text-align: center; font-weight: 600; }
+  td.date { white-space: nowrap; width: 6rem; color: var(--muted); }
+  code {
+    font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+    background: var(--bg-soft);
+    padding: .1rem .35rem;
+    border-radius: 3px;
+    font-size: .9em;
+  }
+  pre {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: .8rem 1rem;
+    overflow-x: auto;
+    font-size: .85rem;
+    line-height: 1.45;
+  }
+  pre code { background: transparent; padding: 0; }
+  ul.todo { list-style: none; padding-left: .2rem; }
+  ul.todo li { margin: .35rem 0; }
+  ul.todo input[type=checkbox] { transform: translateY(2px); margin-right: .55rem; }
+  ul.todo li.done label { color: var(--muted); text-decoration: line-through; }
+  .tag {
+    display: inline-block;
+    padding: .05rem .45rem;
+    border-radius: 3px;
+    font-size: .75rem;
+    font-weight: 600;
+    margin-right: .35rem;
+    vertical-align: 1px;
+  }
+  .tag.ok   { background: #dafbe1; color: var(--ok); }
+  .tag.warn { background: #fff8c5; color: var(--warn); }
+  .tag.bad  { background: #ffebe9; color: var(--bad); }
+  .meta-note {
+    font-size: .85rem;
+    color: var(--muted);
+    border-top: 1px dashed var(--border);
+    margin-top: 3rem;
+    padding-top: .8rem;
+  }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .empty { color: var(--muted); font-style: italic; }
+
+  /* ── TOC sidebar ─────────────────────────────── */
+  #toc {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    width: 240px;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    padding: .8rem 1rem;
+    background: #fafbfc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: .78rem;
+    line-height: 1.5;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    z-index: 100;
+  }
+  #toc::-webkit-scrollbar { width: 6px; }
+  #toc::-webkit-scrollbar-thumb { background: #d0d7de; border-radius: 3px; }
+  #toc-header {
+    font-weight: 700;
+    font-size: .82rem;
+    color: var(--fg);
+    margin-bottom: .5rem;
+    padding-bottom: .3rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #toc-toggle {
+    cursor: pointer;
+    color: var(--muted);
+    font-size: .7rem;
+    user-select: none;
+  }
+  #toc-toggle:hover { color: var(--accent); }
+  #toc.collapsed #toc-list { display: none; }
+  #toc.collapsed { width: auto; }
+  #toc ol { list-style: none; padding-left: 0; margin: 0; }
+  #toc li { margin: .15rem 0; }
+  #toc li.level-3 { padding-left: .9rem; font-size: .74rem; }
+  #toc li.level-4 { padding-left: 1.8rem; font-size: .72rem; color: var(--muted); }
+  #toc a {
+    color: var(--fg);
+    text-decoration: none;
+    display: block;
+    padding: .15rem .35rem;
+    border-left: 2px solid transparent;
+    border-radius: 0 3px 3px 0;
+    transition: background .12s, border-color .12s;
+  }
+  #toc a:hover { background: #eaeef2; color: var(--accent); }
+  #toc a.active {
+    background: #ddf4ff;
+    border-left-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  /* 主内容给 TOC 留空间，避免重叠 */
+  @media (min-width: 1200px) {
+    body { margin-left: max(2.5rem, calc((100vw - 880px) / 2 - 130px)); margin-right: 280px; }
+  }
+  @media (max-width: 1199px) {
+    #toc { display: none; }
+  }
+
+  /* ── Chart pan/zoom + custom tooltip ────────────── */
+  .chart-wrap {
+    position: relative;
+    margin: 0.5rem 0 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fcfcfd;
+    overflow: hidden;
+    user-select: none;
+    max-width: 820px;
+  }
+  .chart-wrap svg {
+    display: block;
+    width: 100%;
+    cursor: grab;
+    touch-action: none;
+  }
+  .chart-wrap svg:active { cursor: grabbing; }
+  .chart-controls {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+    z-index: 10;
+  }
+  .chart-controls button {
+    width: 28px;
+    height: 28px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .85rem;
+    color: var(--fg);
+    line-height: 1;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .chart-controls button:hover { background: #f0f3f6; border-color: var(--accent); color: var(--accent); }
+  .chart-hint {
+    position: absolute;
+    bottom: 6px;
+    left: 8px;
+    font-size: .7rem;
+    color: var(--muted);
+    background: rgba(255,255,255,.8);
+    padding: 2px 6px;
+    border-radius: 3px;
+    pointer-events: none;
+  }
+  #overview-chart g[data-tooltip] circle,
+  #overview-chart g[data-tooltip] line { transition: stroke-width .12s, r .12s; }
+  #overview-chart g[data-tooltip]:hover circle { stroke-width: 4; }
+  #overview-chart g[data-tooltip]:hover line { stroke-width: 3.5; }
+  .chart-tooltip {
+    position: absolute;
+    background: rgba(28, 33, 39, .96);
+    color: #f0f3f6;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: .78rem;
+    line-height: 1.55;
+    max-width: 340px;
+    pointer-events: none;
+    box-shadow: 0 6px 16px rgba(0,0,0,.25);
+    z-index: 200;
+    display: none;
+  }
+  .chart-tooltip .tt-title {
+    color: #ffd54a;
+    font-weight: 700;
+    font-size: .82rem;
+    margin-bottom: .35rem;
+    padding-bottom: .25rem;
+    border-bottom: 1px solid rgba(255,255,255,.15);
+  }
+  .chart-tooltip .tt-line { display: block; }
+</style>
+</head>
+<body>
+
+<h1>FMLP-Rec 复现 · 过程档案</h1>
+
+<blockquote>
+  <strong>元目标</strong>：复现 FMLP-Rec (WWW'22) 这件事是<em>表层任务</em>；<strong>真正的目标是</strong>——以「人 + Claude 一对一对话」的方式跑一遍真实的论文复现，<strong>完整记录过程</strong>，事后据此回答两件事：
+  <ol style="margin: .4rem 0 .2rem 1.2rem;">
+    <li>当前 Claude Code 在论文复现这件事上会犯什么错？卡在哪？</li>
+    <li>如果要把这件事 agent 化，到底<strong>真的需要哪些环节</strong>？（验证或推翻 RecAgent_plan.md 里的 9 角色设计）</li>
+  </ol>
+  因此<strong>这份档案的价值 ≥ 复现产物本身</strong>。每一次踩坑、每一次"啊原来还要做这个"、每一次 Claude 犯傻，都要落到这里。
+</blockquote>
+
+<h2>0. 元信息</h2>
+
+<table>
+  <tbody>
+    <tr><th style="width: 9rem;">字段</th><th>值</th></tr>
+    <tr><td>启动日期</td><td>2026-05-24</td></tr>
+    <tr><td>论文</td><td>FMLP-Rec: Filter-enhanced MLP is All You Need for Sequential Recommendation (WWW'22)</td></tr>
+    <tr><td>论文 PDF</td><td><code>knowledge/papers/2022-seq-fmlp.pdf</code></td></tr>
+    <tr><td>代码产出位置</td><td><code>fmlp-rec/</code>（与 <code>quick-start-seq/</code> 并列，独立项目）</td></tr>
+    <tr><td>协作模式</td><td>人 ↔ Claude（<strong>不走</strong> Coder/Planner/Translator 流水线）</td></tr>
+    <tr><td>主对话者</td><td>yunlongcui2001</td></tr>
+  </tbody>
+</table>
+
+<h2>1. 关键决策记录</h2>
+
+<table>
+  <thead>
+    <tr><th>#</th><th>日期</th><th>决策</th><th>理由</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="num">D1</td>
+      <td class="date">2026-05-24</td>
+      <td><strong>不使用</strong> <code>.claude/agents/coder*</code> 这套自动化流水线</td>
+      <td>在 Planner / Translator 都没实现的前提下硬塞 Coder，等于让人手工充当上游、却被下游的状态机和契约绑架；迭代成本高于价值。先用对话式跑通，看哪些环节真的需要 agent。</td>
+    </tr>
+    <tr>
+      <td class="num">D2</td>
+      <td class="date">2026-05-24</td>
+      <td>FMLP-Rec <strong>新建独立项目</strong> <code>fmlp-rec/</code>，不挂在 <code>quick-start-seq/</code> 上</td>
+      <td>论文用 Beauty / Sports / Toys / Yelp 这类数据集，评测协议、序列长度、训练循环都和 ML-100k 上的 GRU4REC demo 不一样；硬塞会让两个项目都变形。</td>
+    </tr>
+    <tr>
+      <td class="num">D3</td>
+      <td class="date">2026-05-24</td>
+      <td>过程档案放 <code>experiments/fmlp_archive/</code>，与代码 <code>fmlp-rec/</code> 物理分离</td>
+      <td>档案是 meta-level（关于"复现这件事"），代码是 object-level（复现本身的产物）。混在一起会让 git 历史和搜索都变乱。</td>
+    </tr>
+    <tr>
+      <td class="num">D4</td>
+      <td class="date">2026-05-24</td>
+      <td>成功标准 = <strong>架构忠实 + 跑出合理指标</strong>（HR/NDCG 优于 GRU4REC 即可，不追求与论文数字 ±0.5% 对齐）</td>
+      <td>元目标是"记录过程"，把精力压在调参对齐上会偏离主线。只要架构正确、训练动态合理、指标有竞争力，就算复现成功。</td>
+    </tr>
+    <tr>
+      <td class="num">D5</td>
+      <td class="date">2026-05-24</td>
+      <td>Claude 端<strong>直接精读 PDF</strong>（用户安装 <code>poppler</code> 提供 pdftoppm）</td>
+      <td>论文细节（损失、归一化位置、初始化、超参表）走二手转述损耗大，Claude 能直读最准。一次性安装成本换掉所有后续 PDF 阅读摩擦。</td>
+    </tr>
+    <tr>
+      <td class="num">D6</td>
+      <td class="date">2026-05-24</td>
+      <td>本档案使用 <strong>HTML</strong> 格式而非 Markdown</td>
+      <td>浏览器直接打开有样式、checkbox 可勾选、表格可读性更强；后续扩展到 dashboard 视图也方便。代价是手写比 md 啰嗦一点。</td>
+    </tr>
+    <tr>
+      <td class="num">D7</td>
+      <td class="date">2026-05-24</td>
+      <td>起步数据集选 <strong>Amazon Beauty</strong>（单数据集起步）</td>
+      <td>Beauty 是论文 Table 1/4/6 都用的核心数据集，规模最小（22K 序列 / 12K item / 200K 交互），调试快。跑通后再考虑横向扩展到 Sports/Toys/Yelp。</td>
+    </tr>
+    <tr>
+      <td class="num">D8</td>
+      <td class="date">2026-05-24</td>
+      <td>评测协议沿用论文 <strong>主表协议</strong>：1 正样本 + 99 随机负样本，HR@{1,5,10} + NDCG@{5,10} + MRR</td>
+      <td>论文的 Table 4 主表用 sampled metric；full-ranking 在补充材料 Table 7。Sampled metric 跑得快，先对齐主表。D4 已确认"架构忠实+合理指标"足够。</td>
+    </tr>
+    <tr>
+      <td class="num" style="background:#fff8c5; color:var(--warn);">D9 ⚠️</td>
+      <td class="date">2026-05-24</td>
+      <td><strong>严禁参考论文官方 repo</strong>（源码 / 配置 / 预处理脚本 / 数据格式约定 一律不看）</td>
+      <td><strong>元目标核心约束</strong>。"能查源码直接就能抄了"——这本质上是把复现降格为代码搬运，丧失了 agent 化研究的全部信息量。本项目"复现"严格定义 = <strong>仅凭论文 PDF 文本，独立写出可跑通且指标合理的实现</strong>。这是后续 agent 化能力评估的真正基准。</td>
+    </tr>
+    <tr>
+      <td class="num">D10</td>
+      <td class="date">2026-05-24</td>
+      <td>代码用 <strong>PyTorch Lightning</strong> 框架，骨架自主设计（不参考论文 repo，也不沿用 quick-start-seq 的裸 PyTorch 风）</td>
+      <td>Lightning 的 LightningModule / DataModule / Trainer 抽象天然适合"论文→代码"复现：训练循环、early stop、checkpoint 都有标准位置，把精力集中在模型本身。</td>
+    </tr>
+    <tr>
+      <td class="num">D11</td>
+      <td class="date">2026-05-24</td>
+      <td>dropout rate = <strong>0.5</strong>（Claude 自主拍值）</td>
+      <td>论文未明确，且 D9 禁查源码。0.5 是 Transformer 系列（含 SASRec、BERT4Rec）在论文不写 dropout 时的隐含常规；FMLP-Rec 沿用 SASRec block 结构，按此先验合理。若效果不佳再调到 {0.2, 0.3, 0.7} 做小消融。</td>
+    </tr>
+    <tr>
+      <td class="num">D12</td>
+      <td class="date">2026-05-24</td>
+      <td>数据用 <strong>Amazon 官方 5-core dump</strong>（jmcauley.ucsd.edu）</td>
+      <td>5-core 是 McAuley 官方提供的预过滤版本，省一步预处理；交互数（~200K）与论文 Table 3 的 198,502 数字吻合，可佐证我们和论文用的是同一份数据。</td>
+    </tr>
+    <tr>
+      <td class="num">D13</td>
+      <td class="date">2026-05-24</td>
+      <td>训练在 <strong>本机 CPU (Mac)</strong></td>
+      <td>Beauty 数据量小（200K 交互，max_len=50，batch=256），CPU 单 epoch 估 1-3 min。total 30-100 epoch 可接受。避开 MPS 上 FFT 算子支持不全的潜在踩坑。</td>
+    </tr>
+    <tr>
+      <td class="num">D14</td>
+      <td class="date">2026-05-24</td>
+      <td>依赖用 <strong>pyproject.toml</strong></td>
+      <td>Lightning 生态主流；可锁 Python 版本 + 依赖版本 + 分组 dev/test；<code>pip install -e .</code> 让 <code>src/fmlp_rec/</code> 可全局 import。</td>
+    </tr>
+    <tr>
+      <td class="num">D15</td>
+      <td class="date">2026-05-24</td>
+      <td>环境隔离用 <strong>conda</strong>（env 名 <code>fmlp-rec</code>，Python 3.10），依赖通过 <code>pip install -e ".[dev]"</code> 在 env 内装</td>
+      <td>避免污染系统 Python；conda 管解释器隔离，pyproject.toml 管依赖声明，两者职责正交且互补。不引入 environment.yml（依赖描述会与 pyproject 漂移）。</td>
+    </tr>
+    <tr>
+      <td class="num">D16</td>
+      <td class="date">2026-05-24</td>
+      <td>FFN 中间维度 = <strong>embed_dim</strong>（即 d → d → d），config 里命名 <code>ffn_hidden_dim</code> 可调</td>
+      <td>论文 Eq.8 未写中间维度。FMLP-Rec 全文强调"轻量、参数少"——选 d → d → d 符合气质；SASRec/BERT4Rec 同样设计。Transformer 传统 d → 4d → d 留作消融超参。若效果不达 SASRec 再调。</td>
+    </tr>
+    <tr>
+      <td class="num">D17</td>
+      <td class="date">2026-05-24</td>
+      <td>序列 padding 方向 = <strong>左 pad</strong>（pad token 在前，真实 item 在后；不足 max_len=50 时左侧补 0）</td>
+      <td>论文 Eq.9：<code>P(i_{t+1}|i_{1:t}) = e_i^T · F^L_t</code>，用最后位置做预测。左 pad 保证最后位置永远是真实 item；右 pad 的话最后位置可能是 pad，hidden 无效。padding_idx=0 让 pad 的 item embedding 自动为零向量。</td>
+    </tr>
+    <tr>
+      <td class="num" style="background:#fff8c5;">D18 ⚙️</td>
+      <td class="date">2026-05-24</td>
+      <td><strong>修订 D11</strong>：dropout 0.5 → <strong>0.2</strong></td>
+      <td>D11 的 0.5 在第一轮全量训练中卡在 val_hr10=0.386（低于 GRU4Rec 0.4106，未达 D4）。<strong>反思</strong>：我们模型可学习"网络"只 24K 参数（97% 是 item embedding），dropout 0.5 等于关掉一半网络信号，对小网络过狠。BERT4Rec 在类似规模用 0.2，更合适小数据/小模型场景。论文从未明确 dropout rate（D9 禁查源码），故自主修订。</td>
+    </tr>
+    <tr>
+      <td class="num" style="background:#fff8c5;">D19 ⚙️</td>
+      <td class="date">2026-05-24</td>
+      <td><strong>负采样策略</strong>：从「排除整个 user 历史」改为「<strong>只排除当前 target</strong>」（经典 BPR）<br><span class="tag bad">D19 已撤销</span></td>
+      <td>M4 显示 train_loss=0.04 vs val 早 plateau = 过拟合。原策略让模型从未"接触"过用户已交互 item 作为负，模型学到的"item 不像用户交互"是基于"从未见过"的伪信号；经典 BPR 允许采到 user 其他历史 item 作为负，loss 更难压到 0，泛化反而更好。论文 Eq.10 仅说"randomly sampled negative"，未约束排除集合，所以两种都符合 D9。<br><strong>E3 推翻</strong>：HR@10 反降 2.3% / NDCG@10 -3.7% / MRR -4.0%。已回滚 data.py 到 E2 版本。</td>
+    </tr>
+    <tr>
+      <td class="num" style="background:#fff8c5;">D20 ⚙️</td>
+      <td class="date">2026-05-25</td>
+      <td><strong>修订 D16</strong>：FFN hidden_dim 64 → <strong>256</strong>（4× expansion，Transformer 传统）</td>
+      <td>E2 已是「dropout=0.2 + 排除 user 历史负采样」组合的局部最优 (HR@10=0.398)，但仍差 GRU4Rec/SASRec。E3 推翻"负采样是瓶颈"的假设。换"容量维度"试：当前 FFN 只 8K 参数（2×64×64），D16 我拍 d→d→d 是"轻量"先验；改 4d 后 FFN 容量 ×4（→ ~33K），总参数 24K→~70K，仍只占 item embed 的 9%，过拟合空间小。论文 Eq.8 未约束 hidden_dim，符合 D9。<br><strong>E4 PARTIAL ⭐</strong>：HR@10 升至 0.4012（首次过 0.40），成为新 best baseline。</td>
+    </tr>
+    <tr>
+      <td class="num" style="background:#fff8c5;">D21 ⚙️</td>
+      <td class="date">2026-05-25</td>
+      <td><strong>修订 D 配置默认</strong>：num_blocks 2 → <strong>4</strong>（更深）</td>
+      <td>E4 验证"加容量"方向有效但增益仅 +0.7%，需要换维度继续推。论文 §6 消融提到 L=16 仍有增益（"with the increasing of the layer number, the performance of FMLP-Rec can be further improved. However, when the layer number achieves 16, the gain starts to become trivial"），说明 L=2 偏保守。改 L=4 双倍深度，每 block ~33K（FFN=256），加深后非 embed 参数 ~150K，仍只占总参 16%。<br><strong>E5 PARTIAL ⭐⭐</strong>：HR@10=0.4133 (+3.0%) · 突破 GRU4Rec 双指标。</td>
+    </tr>
+    <tr>
+      <td class="num" style="background:#fff8c5;">D22 ⚙️</td>
+      <td class="date">2026-05-25</td>
+      <td>optimizer Adam → <strong>AdamW</strong>，新增 <strong>weight_decay=1e-4</strong></td>
+      <td>E5 train_loss=0.0615 仍偏低 + test_hr10=0.4133 与论文 SASRec 0.4696 差 12%，提示 over-fit 仍是瓶颈之一。AdamW 是 Adam 的 decoupled weight decay 变体（PyTorch 标准），1e-4 是工程常规起手。论文未明示 optimizer 是 Adam 还是 AdamW（仅写 "Adam"），weight_decay 默认 0；加上属于工程级正则补强，符合 D9（论文未明确即可自主）。</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="font-size:.85rem; color:var(--muted); background:var(--bg-soft); padding:.5rem 1rem; border-radius:6px;">
+<strong>关于 dropout 的对话沉淀</strong>（用户问）：
+① dropout 0.2 在 BERT4Rec / 推荐系统是默认值；
+② 大语言模型（Llama）和现代 ViT 几乎不用 dropout（改用 weight decay 或 stochastic depth），但<strong>推荐系统因数据稀疏 + 模型小，dropout 仍主流</strong>；
+③ LN（归一化）/ ReLU（激活）/ Dropout（正则化）是<strong>正交</strong>关注，不能互相替代；
+④ 论文 §4.1 + Eq.7 明确 3 处用 dropout，但未指定 rate。
+</p>
+
+<p style="font-size:.9rem; background:var(--bg-soft); padding:.6rem 1rem; border-radius:6px; border:1px solid var(--border);">
+<strong>环境一键启动</strong>：<br>
+<code>conda create -n fmlp-rec python=3.10 -y &amp;&amp; conda activate fmlp-rec &amp;&amp; cd fmlp-rec &amp;&amp; pip install -e ".[dev]"</code>
+</p>
+
+<p style="font-size: .9rem; color: var(--muted);">后续每一个非平凡决策（要不要换数据集、要不要调架构、要不要加技巧）都补一行到这张表里。</p>
+
+<h2>2. 工作阶段（按时间顺序追加）</h2>
+
+<p>每一阶段一个小条目，模板见下。<strong>不要追求漂亮；越粗糙越真实越好用。</strong></p>
+
+<h3>模板</h3>
+<pre><code>### 阶段 N — 〈一句话标题〉
+- 目标：这一步要拿到什么具体产物？
+- 做法：实际做了什么（命令、文件、对话片段）
+- 耗时：粗略时间（用于事后估算自动化的 ROI）
+- Claude 表现：哪里对/错/卡/绕路；引用具体输出
+- 新发现：原本计划里没有但发现必须做的事
+- 未决问题：这一步留下的悬念</code></pre>
+
+<h3>阶段 0 — 设立档案 &amp; 决策固化 <span class="tag ok">DONE</span></h3>
+<ul>
+  <li><strong>目标</strong>：把"我们选择手工复现而非走流水线"这个决策落地，建好档案结构</li>
+  <li><strong>做法</strong>：
+    <ol>
+      <li>用户和 Claude 对话确认 FMLP-Rec 是论文图谱中的 God Node（31 边）</li>
+      <li>用户审阅 README + RecAgent_plan.md 后，否决了走 Coder 流水线的方案（详见 D1）</li>
+      <li>建 <code>experiments/fmlp_archive/journey.html</code>（本文件）</li>
+    </ol>
+  </li>
+  <li><strong>耗时</strong>：~30 min（含 Claude 初始定位 + 决策对话 + md→html 转换）</li>
+  <li><strong>Claude 表现</strong>：
+    <ul>
+      <li><span class="tag ok">+</span>知识图谱定位准确（直接读 <code>graphify-out/GRAPH_REPORT.md</code> 拿到论文核心结构，没去硬解 PDF）</li>
+      <li><span class="tag ok">+</span>主动指出 8 个未实现的流水线角色，没装"系统已就绪"</li>
+      <li><span class="tag warn">~</span>第一轮回复倾向于推荐"路径 C：手工 + 反向倒推 agent"，但用户的判断"这套设计过度且难迭代"更基础——Claude 面对架构文档时容易<strong>过度尊重</strong>，没主动质疑过度设计的可能性</li>
+      <li><span class="tag warn">~</span>用户写 <code>fmlp_achive</code>（archive 笔误），Claude 选择直接用正确拼写并备注。判断对，但应该一开始就在 AskUserQuestion 里顺带问一下，省一轮交互</li>
+    </ul>
+  </li>
+  <li><strong>新发现</strong>：RecAgent_plan.md 里 9 个角色的设计<strong>完全没有经过任何真实任务验证</strong>，本身就是空中楼阁——这本身就是 D1 的论据，应该在 plan 文档里也加个 warning</li>
+  <li><strong>未决问题</strong>：
+    <ul>
+      <li><code>fmlp-rec/</code> 的目录骨架什么样？要不要参考 <code>quick-start-seq/</code> 的结构？</li>
+      <li>选哪个数据集起步？（Beauty 是论文最常报的，但要先看 PDF 确认评测协议）</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>阶段 1 — 精读论文 &amp; 提取实现要点 <span class="tag ok">DONE</span></h3>
+<ul>
+  <li><strong>目标</strong>：从 PDF 提取复现需要的全部规格——架构、loss、评测协议、超参、数据预处理</li>
+  <li><strong>做法</strong>：用 <code>pdftotext -layout</code> 把 PDF 转纯文本（895 行），分块 sed 阅读 §2–§5 + Appendix A</li>
+  <li><strong>耗时</strong>：~15 min（含一次 Read 工具失败的 detour）</li>
+</ul>
+
+<h4>1.1 架构精规格</h4>
+
+<p>整体结构 = Embedding → ×L (Filter Block) → Prediction：</p>
+
+<pre><code>Embedding Layer
+  E   = ItemEmbed(seq)        # R^{n×d}
+  E_I = Dropout(LayerNorm(E + PosEmbed))    # n=50, d=64
+
+Learnable Filter-enhanced Block × L  (L=2):
+  Filter Layer:
+    X_l   = FFT(F_l)              # 1D FFT along seq dim → C^{n×d}
+    X_l~  = W ⊙ X_l               # W ∈ C^{n×d} 可学习复数滤波器（element-wise）
+    F_l~  = iFFT(X_l~)            # → R^{n×d}
+    F_l   = LayerNorm(F_l + Dropout(F_l~))     # skip + LN
+  FFN:
+    FFN(F_l) = (ReLU(F_l·W1 + b1)) · W2 + b2
+    F_{l+1}  = LayerNorm(F_l + Dropout(FFN(F_l)))
+
+Prediction Layer:
+  score(i | seq_{1:t}) = e_i^T · F^L_t        # 点积匹配 item embedding</code></pre>
+
+<h4>1.2 损失函数（关键！）</h4>
+
+<p>BPR-style <strong>pairwise rank loss</strong>，1:1 负采样（每个正样本随机配一个未交互过的负样本）：</p>
+
+<pre><code>L = -Σ_u Σ_t  log σ( score(i_{t+1} | seq_{1:t}) - score(i_{t+1}^- | seq_{1:t}) )</code></pre>
+
+<p>注意：训练时 1:1 负采样；<strong>评测</strong>时是 1:99 负采样（详见 1.4）。</p>
+
+<h4>1.3 超参表（Appendix A 原文）</h4>
+
+<table>
+  <thead>
+    <tr><th>超参</th><th>论文值</th><th>备注</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>embedding dim <code>d</code></td><td>64</td><td>论文 Figure 6 消融显示 64 最佳，过大易过拟合噪声</td></tr>
+    <tr><td>max sequence length <code>n</code></td><td>50</td><td>不足左 pad，超长右截</td></tr>
+    <tr><td>filter blocks <code>L</code></td><td>2</td><td>消融显示加到 16 仍有增益但收益递减；2 是主表用值</td></tr>
+    <tr><td>batch size</td><td>256</td><td>—</td></tr>
+    <tr><td>optimizer</td><td>Adam</td><td>—</td></tr>
+    <tr><td>learning rate</td><td>1e-3</td><td>—</td></tr>
+    <tr><td>early stopping</td><td>val MRR 连续 10 epoch 不下降即停</td><td>—</td></tr>
+    <tr><td>dropout rate</td><td><span class="tag warn">未明确</span></td><td>论文只说"使用 dropout"。需要查 <a href="https://github.com/RUCAIBox/FMLP-Rec">RUCAIBox/FMLP-Rec</a> 源码默认值。默认猜 0.5。</td></tr>
+    <tr><td>初始化</td><td><span class="tag warn">未明确</span></td><td>用 PyTorch 默认（embedding: N(0,1)；Linear: kaiming uniform）</td></tr>
+  </tbody>
+</table>
+
+<h4>1.4 数据预处理 &amp; 评测协议</h4>
+
+<ul>
+  <li><strong>5-core filter</strong>：去掉交互次数 &lt; 5 的 user 和 item（迭代到稳定）</li>
+  <li>按 user/session <strong>group + 时间升序排序</strong> 形成序列</li>
+  <li><strong>Leave-one-out split</strong>：序列最后 1 个 = test，倒数第 2 个 = val，其余 = train</li>
+  <li><strong>评测</strong>：测试 item + 99 个用户未交互过的随机负样本一起 rank，算 HR@{1,5,10} + NDCG@{5,10} + MRR</li>
+</ul>
+
+<h4>1.5 论文数据集统计（仅 Beauty/Sports 是起步重点）</h4>
+
+<table>
+  <thead><tr><th>Dataset</th><th># Sequences</th><th># Items</th><th># Actions</th><th>Sparsity</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Beauty</strong></td><td>22,363</td><td>12,101</td><td>198,502</td><td>99.93%</td></tr>
+    <tr><td>Sports</td><td>25,598</td><td>18,357</td><td>296,337</td><td>99.95%</td></tr>
+    <tr><td>Toys</td><td>19,412</td><td>11,924</td><td>167,597</td><td>99.93%</td></tr>
+    <tr><td>Yelp</td><td>30,431</td><td>20,033</td><td>316,354</td><td>99.95%</td></tr>
+  </tbody>
+</table>
+
+<h4>1.6 论文 Beauty 主表目标值（我们要复现的"合理指标"基线）</h4>
+
+<table>
+  <thead><tr><th>模型</th><th>HR@10</th><th>NDCG@10</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td>GRU4Rec</td><td>0.4106</td><td>0.2584</td><td>RNN baseline</td></tr>
+    <tr><td>SASRec</td><td>0.4696</td><td>0.3156</td><td>Transformer baseline（主要对手）</td></tr>
+    <tr><td><strong>FMLP-Rec</strong></td><td><strong>≥ SASRec</strong></td><td><strong>≥ SASRec</strong></td><td>D4 标准：跑出来比 SASRec 好就算合理</td></tr>
+  </tbody>
+</table>
+
+<ul>
+  <li><strong>Claude 表现</strong>：
+    <ul>
+      <li><span class="tag ok">+</span>意识到 Read 工具 pdftoppm 调用失败时，立刻 fallback 到 <code>pdftotext -layout</code>，没卡死也没让用户改环境</li>
+      <li><span class="tag ok">+</span>用 <code>grep -n</code> + <code>sed -n</code> 定位读取，避免把 895 行全塞进 context</li>
+      <li><span class="tag bad">-</span>仍然只字面摘抄论文，没主动去 <strong>查 GitHub 源码</strong>确认 dropout/初始化等论文遗漏项——这种"论文写了 80%，剩下 20% 在 repo 里"的常态，复现 agent 必须有意识</li>
+    </ul>
+  </li>
+  <li><strong>新发现</strong>：
+    <ul>
+      <li>论文对 <code>dropout rate</code> 和 <code>初始化策略</code> 是真空的，这是所有论文的常态——<strong>复现 agent 必须有"读完论文 → 强制访问官方 repo"的环节</strong></li>
+      <li>训练负采样 (1:1) 和评测负采样 (1:99) 是<strong>两套不同的协议</strong>，容易写错</li>
+    </ul>
+  </li>
+  <li><strong>未决问题</strong>：见下面活跃问题池</li>
+</ul>
+
+<h3>阶段 2 — fmlp-rec/ 骨架设计 <span class="tag warn">DRAFT · 待审</span></h3>
+
+<ul>
+  <li><strong>目标</strong>：在<strong>不参考论文 repo</strong>（D9）的前提下，凭论文文本 + PyTorch Lightning 经验，设计一个最小但完整的项目骨架</li>
+  <li><strong>设计原则</strong>：
+    <ul>
+      <li>核心创新（Filter Layer）独立文件，便于读、测、消融</li>
+      <li>Loss / Metric / Optimizer / Eval 流程集中在 LightningModule</li>
+      <li>数据预处理与训练解耦（dataset 处理脚本一次跑完，训练只读处理后产物）</li>
+      <li>带最小测试：FFT 可逆性、复数滤波器梯度流、负样本不污染正样本——这几个是 FFT-based 模型的常见踩坑点</li>
+    </ul>
+  </li>
+</ul>
+
+<h4>2.1 目录骨架草案</h4>
+
+<pre><code>fmlp-rec/
+├── pyproject.toml                # 依赖：torch, lightning, pandas, numpy, pyyaml
+├── README.md                     # 跑法 + 论文链接 + 复现指标对比
+├── configs/
+│   └── beauty_default.yaml       # 默认超参（d=64, max_len=50, L=2, batch=256, lr=1e-3, dropout=0.5, ...）
+├── data/
+│   ├── raw/                      # Amazon Beauty 5-core 原始 json.gz（gitignore）
+│   └── processed/                # train_seq / val_seq / test_seq / item_map / 99-neg cache（gitignore）
+├── scripts/
+│   ├── download_beauty.sh        # curl 拉 Amazon 官方 5-core
+│   └── prepare_data.py           # raw → user 分组 → 时间排序 → leave-one-out → 99-neg eval 集
+├── src/
+│   └── fmlp_rec/
+│       ├── __init__.py
+│       ├── filter_block.py       # FilterLayer (FFT → W⊙X → iFFT) + FFN + skip/LN
+│       ├── model.py              # FMLPRec(nn.Module): Embedding → ×L FilterBlock → 点积预测
+│       ├── data.py               # BeautyDataModule(pl.LightningDataModule)
+│       ├── losses.py             # BPR pairwise rank loss
+│       ├── metrics.py            # HR@k / NDCG@k / MRR（输入 99-neg 排名）
+│       └── lit_module.py         # FMLPRecLit(pl.LightningModule)：组装上面所有东西 + Adam + early stop
+├── train.py                      # 入口：argparse → 读 yaml → Trainer.fit()
+└── tests/
+    ├── test_filter_block.py      # ① 输入输出形状 ② iFFT(FFT(x)) ≈ x ③ 复数 W 有梯度
+    ├── test_data.py              # ① split 不泄露 ② 99-neg 不含正样本 ③ pad/truncate 正确
+    └── test_metrics.py           # 手算 case 对齐 HR/NDCG/MRR</code></pre>
+
+<h4>2.2 关键文件职责（一句话/个）</h4>
+
+<table>
+  <thead><tr><th>文件</th><th>职责</th><th>论文对应</th></tr></thead>
+  <tbody>
+    <tr><td><code>filter_block.py</code></td><td>FilterLayer（FFT→W⊙X→iFFT）+ FFN + 2×(skip+LN+dropout)</td><td>§4.1.2 + Eq.4–8</td></tr>
+    <tr><td><code>model.py</code></td><td>ItemEmbed + PosEmbed → LN+Dropout → L×FilterBlock → 末位与 item embedding 点积</td><td>§4.1.1 + §4.1.3</td></tr>
+    <tr><td><code>losses.py</code></td><td>BPR pairwise：<code>-log σ(score_pos - score_neg)</code></td><td>Eq.10</td></tr>
+    <tr><td><code>metrics.py</code></td><td>HR@{1,5,10} / NDCG@{5,10} / MRR，输入是"正样本在 100 个候选中的排名"</td><td>§5.1.2</td></tr>
+    <tr><td><code>data.py</code></td><td>读 processed/，构造 (seq, pos, neg) 训练样本 + (seq, 100-candidates) 评测样本</td><td>§5.1.1</td></tr>
+    <tr><td><code>lit_module.py</code></td><td>training_step / validation_step / configure_optimizers / early stop on val MRR</td><td>Appendix A</td></tr>
+    <tr><td><code>prepare_data.py</code></td><td>Amazon json.gz → user 分组 + 时间排序 → leave-one-out split → 为每个 (user, val/test pos) 采 99 neg</td><td>§5.1.1</td></tr>
+  </tbody>
+</table>
+
+<h4>2.3 已知的工程踩坑点（凭经验，预先标记）</h4>
+
+<ul>
+  <li><strong>复数张量的 dropout</strong>：PyTorch 的 <code>nn.Dropout</code> 不支持复数 tensor。Filter Layer 内部如果想做 dropout，要在 iFFT 之后做（论文 Eq.7 正好如此）✓</li>
+  <li><strong>FFT 的 batch 维</strong>：<code>torch.fft.rfft</code> 默认在最后一维做。我们的 tensor shape 是 <code>(batch, seq=50, dim=64)</code>，要在 <code>dim=-2</code>（seq 维）做 FFT，要么转置要么显式传 <code>dim</code> 参数</li>
+  <li><strong>实数 FFT vs 复数 FFT</strong>：<code>rfft</code> 输出 <code>(n//2+1)</code> 个复数频点，比 <code>fft</code> 省一半。论文说 W ∈ C^{n×d}，按理用 <code>fft</code>；但 <code>rfft</code> + 对应 <code>irfft</code> 数学等价且实数输入更快——决策：用 <code>rfft</code>/<code>irfft</code>，W 形状改为 <code>(n//2+1, d)</code> 复数</li>
+  <li><strong>CPU MKL FFT 数值精度</strong>：CPU 上 FFT 误差比 GPU 稍大，<code>iFFT(FFT(x)) ≈ x</code> 测试要用 <code>atol=1e-5</code> 而非默认</li>
+  <li><strong>99-neg 评测集要缓存</strong>：每次评测重新采 99 个负样本会导致评测结果有方差，应该在 prepare_data 时一次性采好存盘</li>
+</ul>
+
+<h4>2.4 阶段 2 待办（实际动手前的 checklist）</h4>
+
+<ul class="todo">
+  <li class="done"><label><input type="checkbox" checked disabled> <s>用户审定 2.1 骨架草案</s>（已批准）</label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>用户拍 pyproject.toml</s>（D14）</label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>环境隔离方案</s>（D15 = conda + pip install -e .）</label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>创建空骨架（18 个文件，含 __init__.py / .gitignore / .gitkeep）</s></label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>写 pyproject.toml + configs/beauty_default.yaml + download_beauty.sh</s></label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>用户跑 conda 环境创建 + pip install -e ".[dev]"</s>（lightning 2.6.4 / pandas 3.0.3 / torchmetrics 1.9.0 / fmlp-rec editable ✓）</label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>conda init zsh + 真正激活 fmlp-rec env + 重装到正确 env</s>（torch 2.12.0 / lightning 2.6.4 / fmlp_rec OK ✓）</label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>跑 download_beauty.sh 拉数据</s>（43 MB / 198,502 行 ✓）</label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>实现 prepare_data.py</s> <strong>+ M1 数据对齐里程碑</strong></label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>实现 filter_block.py + tests/test_filter_block.py（TDD）</s> <strong>+ M2 Filter Block 全绿里程碑</strong></label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>实现 losses.py + metrics.py + 对应测试</s>（7/7 绿；累计 12 个测试全绿）</label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>实现 model.py + 测试</s>（5/5 绿；累计 17/17 全绿）</label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>实现 data.py + 测试</s>（4/4 绿；累计 21/21 全绿 · 1.94s）</label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>实现 lit_module.py + train.py</s></label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>跑通 1 epoch smoke test</s> <strong>+ M3 端到端 Pipeline 里程碑</strong></label></li>
+  <li><label><input type="checkbox"> 跑通 1 epoch smoke test</label></li>
+  <li><label><input type="checkbox"> 跑完整训练，对照 D4 标准看结果</label></li>
+</ul>
+
+<h2>3. 待回答问题（活跃问题池）</h2>
+
+<p>工作过程中冒出来的问题先丢这里，回答了再划掉/移到归档区。</p>
+
+<ul class="todo">
+  <li class="done"><label><input type="checkbox" checked disabled> <s>成功标准</s> → <strong>D4</strong>：架构忠实 + 合理指标</label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>PDF 渲染</s> → <strong>D5</strong>：用户装 poppler，Claude 直读</label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>数据集选择</s> → <strong>D7</strong>：Beauty 起步</label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>评测协议</s> → <strong>D8</strong>：1 正 + 99 负 sampled metric（leave-one-out split）</label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>dropout rate</s> → <strong>D11</strong>：0.5（Claude 自主拍值，D9 禁查源码）</label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>代码骨架风格</s> → <strong>D10</strong>：PyTorch Lightning，自主设计</label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>数据源</s> → <strong>D12</strong>：Amazon 官方 5-core dump</label></li>
+  <li class="done"><label><input type="checkbox" checked disabled> <s>训练资源</s> → <strong>D13</strong>：本机 CPU (Mac)</label></li>
+  <li><label><input type="checkbox"> <strong>依赖管理</strong>：<code>requirements.txt</code> / <code>pyproject.toml</code>？建议 <code>pyproject.toml</code>（Lightning 项目主流）。等用户拍。</label></li>
+  <li><label><input type="checkbox"> <strong>fmlp-rec/ 目录骨架</strong>：等阶段 2 设计完后让用户审一遍</label></li>
+</ul>
+
+<h2>3.5 里程碑 (Milestones)</h2>
+
+<h3>M5 — 突破 GRU4Rec baseline（D4 仍未达成） <span class="tag warn">2026-05-25</span></h3>
+<ul>
+  <li><strong>事件</strong>：E5 (num_blocks 2→4) 跑出 <strong>test_hr10=0.4133, test_ndcg10=0.2656</strong>，<strong>同时超过 GRU4Rec 论文 baseline</strong>（HR@10=0.4106, NDCG@10=0.2584）。</li>
+  <li><strong>进展度</strong>：
+    <ul>
+      <li>✅ HR@10: 起点 0.386 → 当前 <strong>0.4133</strong> (+7.1%)，<strong>超过 GRU4Rec +0.7%</strong></li>
+      <li>✅ NDCG@10: 0.223 → <strong>0.2656</strong> (+19%)，<strong>超过 GRU4Rec +2.8%</strong></li>
+      <li>❌ 仍差 SASRec D4 目标 0.4696 约 12%</li>
+    </ul>
+  </li>
+  <li><strong>5 个实验后的认知地图</strong>：
+    <ul>
+      <li>dropout (E2 +1.2%) · FFN 容量 (E4 +0.7%) · 深度 (E5 +3.0%) 都有效，<strong>深度增益最大</strong></li>
+      <li>负采样改"经典 BPR" (E3 -2.3%) 推翻——原"排除 user 历史"策略对 Beauty 这种稀疏数据是更好选择</li>
+      <li>train_loss 趋势：0.40 → 0.04 → 0.10 → 0.06，<strong>过拟合是反复出现的瓶颈</strong></li>
+    </ul>
+  </li>
+</ul>
+
+<h3>M4 — 第一轮全量训练验收（<strong>未达 D4 标准</strong>） <span class="tag bad">2026-05-24</span></h3>
+
+<table>
+  <thead><tr><th>指标</th><th>D11 d=0.5（killed @ep38）</th><th>D18 d=0.2（151 ep, best @141）</th><th>GRU4Rec 论文</th><th>SASRec 论文</th><th>D4 目标</th></tr></thead>
+  <tbody>
+    <tr><td>HR@10</td><td>val=0.386</td><td><strong>test=0.398</strong></td><td>0.4106</td><td>0.4696</td><td>≥ 0.4696</td></tr>
+    <tr><td>NDCG@10</td><td>val=0.223</td><td><strong>test=0.254</strong></td><td>0.2584</td><td>0.3156</td><td>≥ 0.3156</td></tr>
+    <tr><td>MRR</td><td>val=0.192</td><td><strong>test=0.229</strong></td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>train_loss 末</td><td>~0.40</td><td><strong>0.0421</strong></td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>训练用时</td><td>~16 min (killed)</td><td>35:41</td><td>—</td><td>—</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<ul>
+  <li><strong>结论</strong>：D18（dropout 0.2）<strong>方向对但量级不够</strong>。改善 HR@10 +1.2% / NDCG@10 +14% / MRR +19%，但仍差 SASRec ~17%，甚至略低 GRU4Rec。</li>
+  <li><strong>诊断线索</strong>：<code>train_loss=0.0421</code> 极小、<code>val_mrr</code> 早在 epoch 141 plateau。<strong>典型过拟合信号</strong>——训练拟合很好但泛化未跟上。</li>
+  <li><strong>下一步</strong>：进入正式 diagnose 阶段。按可能性排序优先改负采样（#2），再 dropout/init。</li>
+</ul>
+
+<h3>M3 — 端到端 Pipeline 打通 <span class="tag ok">2026-05-24</span></h3>
+<ul>
+  <li><strong>事件</strong>：实现 <code>lit_module.py</code> + <code>train.py</code> 后，跑 <code>python train.py --max-epochs 1 --limit-train-batches 0.1</code>，全流程跑通：
+    <pre><code>fit  → 51 train batches (3s, 15 batch/s)
+    → 88 val batches  (1s, 70 batch/s)
+    → EarlyStopping + ModelCheckpoint 触发
+test → 88 test batches (1.3s) + restore best ckpt
+[val]  HR@10=0.103  NDCG@10=0.0474  MRR=0.0541
+[test] HR@10=0.1012 NDCG@10=0.0465  MRR=0.0531</code></pre>
+  </li>
+  <li><strong>指标解读</strong>：HR@10 ≈ 0.10 ≈ 随机猜（10/100）。<strong>预期</strong>——只跑 1 epoch × 10% 数据（约 13K instances，论文 134K × N epoch）。M3 只验证 pipeline 健康，不评判指标。</li>
+  <li><strong>意义</strong>：6 个文件、~150 行业务代码、21 个单元测试，<strong>独立从论文文本构建出可训练 + 可评测的完整 pipeline</strong>。下一步全量训练才是真正的 D4 复现验收。</li>
+</ul>
+
+<h3>M2 — Filter Block TDD 全绿 <span class="tag ok">2026-05-24</span></h3>
+<ul>
+  <li><strong>事件</strong>：先写 5 个测试（W rfft shape / shape preserved / complex W grad / finite forward / end-to-end backward）→ pytest 收 ImportError（红）→ 写 36 行实现（FilterLayer 17 行 + FilterBlock 14 行 + import）→ pytest <strong>5/5 PASSED in 4.51s</strong>。</li>
+  <li><strong>实现关键</strong>：
+    <ul>
+      <li><code>W = nn.Parameter(torch.randn(seq_len//2+1, embed_dim, dtype=torch.complex64) * 0.02)</code>：复数滤波器作为可学习参数，0.02 init 缩放（论文未明确，BERT 风格先验）</li>
+      <li><code>torch.fft.rfft(x, dim=-2)</code> + <code>torch.fft.irfft(Y, n=seq_len, dim=-2)</code>：沿序列维做 FFT；显式传 <code>n</code> 避免长度推断歧义</li>
+      <li>FFN 用 <code>nn.Sequential(Linear→ReLU→Linear)</code> 内联，不独立成 class（轻量）</li>
+    </ul>
+  </li>
+  <li><strong>意义</strong>：论文最核心、最容易写错的模块（FFT + 复数 W）<strong>一次性写对</strong>。复数 grad 流、rfft shape、形状保持三个最大踩坑点都被 TDD 提前钉死。</li>
+</ul>
+
+<h3>M1 — 数据预处理 100% 对齐论文 Table 3 <span class="tag ok">2026-05-24</span></h3>
+<ul>
+  <li><strong>事件</strong>：在 D9 严格约束（禁查官方 repo）下，独立从论文 §5.1.1 文本 + Amazon 5-core raw 数据写出 <code>prepare_data.py</code>，跑出的三个数字与论文 Table 3 完全一致：
+    <ul>
+      <li>198,502 interactions（论文：198,502）✓</li>
+      <li>22,363 users（论文：22,363）✓</li>
+      <li>12,101 items（论文：12,101）✓</li>
+    </ul>
+  </li>
+  <li><strong>意义</strong>：证明<strong>论文 §5.1.1 的文本描述（"按 user 分组 + 按时间排序 + 5-core filter"）足够明确</strong>，无需查源码即可复现预处理。这是 D9 路径上的<strong>第一个正向证据</strong>：论文不是黑盒，认真读就能复现。</li>
+  <li><strong>下一个待对齐项</strong>：训练 loss 收敛曲线、Beauty HR@10/NDCG@10 ≥ SASRec（D4）</li>
+</ul>
+
+<h2>3.6 实验记录（Experiments）</h2>
+
+<p>每一次「<strong>改一个变量</strong>→训练→对比改前 vs 改后→标记结论」即一次实验，独立编号 E1/E2/...，与决策（D-）和里程碑（M-）形成三套交叉索引。</p>
+
+<p><strong>结论标签语义</strong>：
+  <span class="tag ok">CONFIRMED</span> 假设成立、达标；
+  <span class="tag warn">PARTIAL</span> 方向对但量级不够；
+  <span class="tag bad">REJECTED</span> 假设错或反效果；
+  <span class="tag warn">PENDING</span> 待跑；
+  <span class="tag bad">BASELINE_FAIL</span> 起点未达标。
+</p>
+
+<h3>📈 实验演进图（DAG · 每轮自动更新）</h3>
+
+<p style="font-size:.85rem; color:var(--muted);">
+每个<strong>节点</strong> = 一次实验（HR@10 决定纵向位置）。每条<strong>边</strong> = 一次"从父节点出发的改动"——<strong>悬停边或节点</strong>可以看具体改了什么 + delta。<br>
+<strong>主链</strong>（实线）= 成为新 best baseline 的成功改进。<strong>失败分支</strong>（红虚线）= REJECTED，回退到父节点。<strong>探索分支</strong>（灰虚线）= PENDING。<br>
+⭐ = 当前 best baseline；下一轮实验默认从它出发。
+</p>
+
+<div class="chart-wrap" id="chart-wrap">
+<svg id="overview-chart" viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- 坐标系定义：
+       X: iteration 1..8 → x = 110 + (i-1) * 80    [E1=110, E2=190, E3=270, E4=350, ...]
+       Y: HR 0.30..0.50 → y = 80 + (0.50 - HR) / 0.20 * 280
+          HR=0.30 → y=360 ; HR=0.40 → y=220 ; HR=0.50 → y=80
+          HR=0.386 → y=80+(0.114/0.20)*280 = 80+159.6 = 239.6
+          HR=0.398 → y=80+(0.102/0.20)*280 = 80+142.8 = 222.8
+          HR=0.389 → y=80+(0.111/0.20)*280 = 80+155.4 = 235.4
+          HR=0.4106(GRU4Rec) → y=80+(0.0894/0.20)*280 = 80+125.16 = 205.16
+          HR=0.4696(SASRec)  → y=80+(0.0304/0.20)*280 = 80+42.56 = 122.56
+  -->
+
+  <!-- Y 轴 grid + labels -->
+  <g font-family="-apple-system, sans-serif" font-size="11" fill="#666">
+    <line x1="80" y1="360" x2="770" y2="360" stroke="#eef0f2" stroke-width="1"/>
+    <text x="72" y="364" text-anchor="end">0.30</text>
+    <line x1="80" y1="290" x2="770" y2="290" stroke="#eef0f2" stroke-width="1"/>
+    <text x="72" y="294" text-anchor="end">0.35</text>
+    <line x1="80" y1="220" x2="770" y2="220" stroke="#eef0f2" stroke-width="1"/>
+    <text x="72" y="224" text-anchor="end">0.40</text>
+    <line x1="80" y1="150" x2="770" y2="150" stroke="#eef0f2" stroke-width="1"/>
+    <text x="72" y="154" text-anchor="end">0.45</text>
+    <line x1="80" y1="80" x2="770" y2="80" stroke="#eef0f2" stroke-width="1"/>
+    <text x="72" y="84" text-anchor="end">0.50</text>
+  </g>
+
+  <!-- 论文参考线（标签放线上方左侧，确保可见） -->
+  <g font-family="-apple-system, sans-serif" font-size="11">
+    <!-- GRU4Rec 0.4106 → y=205 -->
+    <line x1="80" y1="205" x2="770" y2="205" stroke="#999" stroke-width="1.2" stroke-dasharray="6 4"/>
+    <text x="90" y="200" fill="#666" font-weight="600">GRU4Rec baseline · 0.4106</text>
+    <!-- SASRec D4 目标 0.4696 → y=123 -->
+    <line x1="80" y1="123" x2="770" y2="123" stroke="#1a7f37" stroke-width="1.5" stroke-dasharray="6 4"/>
+    <text x="90" y="118" fill="#1a7f37" font-weight="700">🎯 SASRec D4 目标 · 0.4696</text>
+  </g>
+
+  <!-- 主坐标轴 -->
+  <line x1="80" y1="380" x2="770" y2="380" stroke="#333" stroke-width="1.5"/>
+  <line x1="80" y1="80" x2="80" y2="380" stroke="#333" stroke-width="1.5"/>
+
+  <!-- X 轴 tick labels -->
+  <g font-family="-apple-system, sans-serif" font-size="11" fill="#666" text-anchor="middle">
+    <text x="110" y="398">iter 1</text>
+    <text x="190" y="398">iter 2</text>
+    <text x="270" y="398">iter 3</text>
+    <text x="350" y="398">iter 4</text>
+    <text x="430" y="398">iter 5</text>
+    <text x="510" y="398">iter 6</text>
+    <text x="590" y="398">iter 7</text>
+    <text x="670" y="398">iter 8</text>
+  </g>
+
+  <!-- Y 轴标签 -->
+  <text x="30" y="225" font-family="-apple-system, sans-serif" font-size="12" fill="#666" transform="rotate(-90 30 225)" text-anchor="middle">HR@10</text>
+
+  <!-- ═══ 节点 + 边的真实数据（每轮自动追加） ═══ -->
+
+  <!-- 颜色定义：
+       BASELINE_FAIL / REJECTED : #cf222e (红)
+       PARTIAL                  : #bf8700 (黄)
+       CONFIRMED                : #1a7f37 (绿)
+       PENDING                  : 灰空心 #888
+       BEST baseline            : 金色描边 #d4a72c
+  -->
+
+  <!-- ── 边 (画在节点之前以便节点覆盖) ── -->
+
+  <!-- E1 → E2 : 主链, dropout 0.5→0.2 (HR +0.012) -->
+  <g>
+    <line x1="110" y1="240" x2="190" y2="223" stroke="#bf8700" stroke-width="2.2"/>
+    <title>E1 → E2 · 改 dropout: 0.5 → 0.2&#10;HR@10: 0.386 → 0.398 (+1.2%)&#10;结论: PARTIAL (方向对，量级不够)</title>
+  </g>
+
+  <!-- E2 → E3 : 失败分支, 负采样 (HR -0.009) -->
+  <g>
+    <line x1="190" y1="223" x2="270" y2="235" stroke="#cf222e" stroke-width="1.8" stroke-dasharray="5 3"/>
+    <title>E2 → E3 · 改负采样: 排除 user 历史 → 仅排除 target (经典 BPR)&#10;HR@10: 0.398 → 0.389 (-2.3%)&#10;结论: REJECTED (回退到 E2)</title>
+  </g>
+
+  <!-- E2 → E4 : 主链改进 (PARTIAL), FFN hidden 64→256 -->
+  <g>
+    <line x1="190" y1="223" x2="350" y2="218" stroke="#bf8700" stroke-width="2.2"/>
+    <title>E2 → E4 · 改 FFN hidden: 64 → 256 (4× expansion)&#10;HR@10: 0.398 → 0.4012 (+0.7%)&#10;结论: PARTIAL (HR@10 首次过 0.40，但仍差 GRU4Rec)</title>
+  </g>
+
+  <!-- E4 → E5 : 主链改进 (PARTIAL), num_blocks 2→4 -->
+  <g>
+    <line x1="350" y1="218" x2="430" y2="201" stroke="#bf8700" stroke-width="2.2"/>
+    <title>E4 → E5 · 改 num_blocks: 2 → 4 (双倍深度)&#10;HR@10: 0.4012 → 0.4133 (+3.0%, 迄今最大单次增益)&#10;结论: PARTIAL · 突破 GRU4Rec (0.4106)，仍差 SASRec 12%</title>
+  </g>
+
+  <!-- E5 → E6 : 探索分支 (PENDING), AdamW + weight_decay 1e-4 -->
+  <g>
+    <line x1="430" y1="201" x2="510" y2="201" stroke="#888" stroke-width="1.8" stroke-dasharray="4 4"/>
+    <title>E5 → E6 · 改 optim: Adam → AdamW(weight_decay=1e-4)&#10;状态: PENDING (训练中)</title>
+  </g>
+
+  <!-- ── 节点 ── -->
+
+  <!-- E1 (BASELINE_FAIL): HR=0.386 → y=240, x=110 -->
+  <g>
+    <circle cx="110" cy="240" r="8" fill="#cf222e" stroke="white" stroke-width="2.5"/>
+    <text x="110" y="262" font-family="-apple-system, sans-serif" font-size="11" fill="#cf222e" text-anchor="middle" font-weight="700">E1</text>
+    <text x="110" y="222" font-family="-apple-system, sans-serif" font-size="10" fill="#cf222e" text-anchor="middle">0.386</text>
+    <title>E1 (Baseline) · BASELINE_FAIL&#10;config: dropout=0.5, 负采样=排除 user 历史, FFN=64&#10;HR@10=val 0.386 | NDCG@10=val 0.223 | MRR=val 0.192&#10;说明: 起点，未达 D4，提前 kill @ep38</title>
+  </g>
+
+  <!-- E2 (PARTIAL, 不再是 best): HR=0.398 → y=223, x=190 -->
+  <g>
+    <circle cx="190" cy="223" r="8" fill="#bf8700" stroke="white" stroke-width="2.5"/>
+    <text x="190" y="245" font-family="-apple-system, sans-serif" font-size="11" fill="#bf8700" text-anchor="middle" font-weight="700">E2</text>
+    <text x="190" y="205" font-family="-apple-system, sans-serif" font-size="10" fill="#bf8700" text-anchor="middle">0.398</text>
+    <title>E2 · PARTIAL · 曾是 best baseline，被 E4 取代&#10;改动: dropout 0.5 → 0.2&#10;HR@10=0.398 (+1.2% vs E1) | NDCG@10=0.254 | MRR=0.229&#10;train_loss末=0.0421 | 151 epoch (best @141)</title>
+  </g>
+
+  <!-- E3 (REJECTED): HR=0.389 → y=235, x=270 -->
+  <g>
+    <circle cx="270" cy="235" r="7" fill="#cf222e" stroke="white" stroke-width="2.5" opacity="0.7"/>
+    <text x="270" y="256" font-family="-apple-system, sans-serif" font-size="11" fill="#cf222e" text-anchor="middle" font-weight="700">E3</text>
+    <text x="270" y="217" font-family="-apple-system, sans-serif" font-size="10" fill="#cf222e" text-anchor="middle">0.389</text>
+    <title>E3 · REJECTED · 已回退&#10;改动: 负采样 → 仅排除 target (经典 BPR)&#10;HR@10=0.389 (-2.3% vs E2) | NDCG@10=0.245 | MRR=0.220&#10;train_loss末=0.0967 | 122 epoch (best @112)&#10;结论: 「难训→泛化更好」假设被推翻</title>
+  </g>
+
+  <!-- E4 (PARTIAL, 不再是 best): HR=0.4012 → y=218, x=350 -->
+  <g>
+    <circle cx="350" cy="218" r="8" fill="#bf8700" stroke="white" stroke-width="2.5"/>
+    <text x="350" y="240" font-family="-apple-system, sans-serif" font-size="11" fill="#bf8700" text-anchor="middle" font-weight="700">E4</text>
+    <text x="350" y="200" font-family="-apple-system, sans-serif" font-size="10" fill="#bf8700" text-anchor="middle">0.4012</text>
+    <title>E4 · PARTIAL · 曾是 best baseline，被 E5 取代&#10;改动: FFN hidden 64 → 256 (4× expansion)&#10;HR@10=0.4012 (+0.7% vs E2) | NDCG@10=0.2598 | MRR=0.2349&#10;train_loss末=0.097 | 179 epoch (best @169)</title>
+  </g>
+
+  <!-- E5 (PARTIAL, ⭐⭐ 当前 best baseline 突破 GRU4Rec): HR=0.4133 → y=201, x=430 -->
+  <g>
+    <!-- 外层金色描边表示 best baseline -->
+    <circle cx="430" cy="201" r="11" fill="none" stroke="#d4a72c" stroke-width="2.5"/>
+    <circle cx="430" cy="201" r="8" fill="#bf8700" stroke="white" stroke-width="2.5"/>
+    <text x="430" y="223" font-family="-apple-system, sans-serif" font-size="11" fill="#bf8700" text-anchor="middle" font-weight="700">E5 ⭐⭐</text>
+    <text x="430" y="183" font-family="-apple-system, sans-serif" font-size="10" fill="#bf8700" text-anchor="middle">0.4133</text>
+    <title>E5 · PARTIAL · ⭐⭐ 当前 BEST BASELINE&#10;改动: num_blocks 2 → 4 (双倍深度)&#10;HR@10=0.4133 (+3.0% vs E4 · 突破 GRU4Rec 0.4106) | NDCG@10=0.2656 (突破 GRU4Rec 0.2584) | MRR=0.2387&#10;train_loss末=0.0615 | 198 epoch (best @188)&#10;仍差 SASRec 0.4696 ~12%</title>
+  </g>
+
+  <!-- E6 (PENDING): x=510, y 占位 201 -->
+  <g>
+    <circle cx="510" cy="201" r="8" fill="none" stroke="#888" stroke-width="2" stroke-dasharray="3 2"/>
+    <text x="510" y="223" font-family="-apple-system, sans-serif" font-size="11" fill="#888" text-anchor="middle" font-weight="600">E6</text>
+    <text x="510" y="183" font-family="-apple-system, sans-serif" font-size="10" fill="#888" text-anchor="middle">…</text>
+    <title>E6 · PENDING (训练中)&#10;改动: optim Adam → AdamW(weight_decay=1e-4)&#10;假设: E5 仍过拟合 (train_loss=0.06)，加正则化能再榨泛化&#10;预期: HR@10 ≥ 0.42 → weight_decay 有效</title>
+  </g>
+
+  <!-- ── 图例 (顶部) ── -->
+  <g font-family="-apple-system, sans-serif" font-size="10">
+    <text x="80" y="22" fill="#333" font-weight="700">节点 = 实验，边 = 改动 (悬停看详情)</text>
+    <!-- 节点状态 -->
+    <circle cx="80" cy="44" r="5" fill="#1a7f37" stroke="white" stroke-width="1.5"/>
+    <text x="91" y="48" fill="#333">CONFIRMED</text>
+    <circle cx="170" cy="44" r="5" fill="#bf8700" stroke="white" stroke-width="1.5"/>
+    <text x="181" y="48" fill="#333">PARTIAL</text>
+    <circle cx="240" cy="44" r="5" fill="#cf222e" stroke="white" stroke-width="1.5"/>
+    <text x="251" y="48" fill="#333">REJECTED/FAIL</text>
+    <circle cx="345" cy="44" r="5" fill="none" stroke="#888" stroke-width="1.5" stroke-dasharray="2 2"/>
+    <text x="355" y="48" fill="#333">PENDING</text>
+    <circle cx="420" cy="44" r="7" fill="none" stroke="#d4a72c" stroke-width="2"/>
+    <text x="431" y="48" fill="#333">⭐ best baseline (下一轮起点)</text>
+    <!-- 边类型 -->
+    <line x1="600" y1="44" x2="625" y2="44" stroke="#bf8700" stroke-width="2.2"/>
+    <text x="630" y="48" fill="#333">主链改进</text>
+    <line x1="685" y1="44" x2="710" y2="44" stroke="#cf222e" stroke-width="1.8" stroke-dasharray="5 3"/>
+    <text x="715" y="48" fill="#333">失败回退</text>
+  </g>
+</svg>
+<div class="chart-controls">
+  <button id="chart-zoom-in" title="放大 (或滚轮上)">＋</button>
+  <button id="chart-zoom-out" title="缩小 (或滚轮下)">－</button>
+  <button id="chart-reset" title="重置视图">↺</button>
+</div>
+<div class="chart-hint">🖱️ 拖动 = 平移 · 滚轮 = 缩放 · 悬停节点/边 = 详情</div>
+<div class="chart-tooltip" id="chart-tooltip"></div>
+</div>
+
+<h3>📊 实验对比总表</h3>
+
+<table style="font-size: .85rem;">
+  <thead>
+    <tr>
+      <th>E#</th><th>实验点</th><th>参数值</th>
+      <th>HR@10</th><th>NDCG@10</th><th>MRR</th><th>train_loss末</th><th>耗时</th><th>结论</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>E1</strong></td>
+      <td>baseline（无改动）</td>
+      <td>dropout=0.5<br>neg=排除 user 历史</td>
+      <td>val 0.386</td><td>val 0.223</td><td>val 0.192</td><td>~0.40</td>
+      <td>~16 min<br>(killed@ep38)</td>
+      <td><span class="tag bad">BASELINE_FAIL</span></td>
+    </tr>
+    <tr>
+      <td><strong>E2</strong></td>
+      <td><strong>dropout</strong></td>
+      <td>dropout: 0.5 → <strong>0.2</strong></td>
+      <td><strong>0.398</strong></td><td><strong>0.254</strong></td><td><strong>0.229</strong></td><td>0.0421</td>
+      <td>35:41<br>(151 ep, best@141)</td>
+      <td><span class="tag warn">PARTIAL</span></td>
+    </tr>
+    <tr>
+      <td><strong>E3</strong></td>
+      <td><strong>负采样策略</strong></td>
+      <td>neg: 排除 user 历史 → <strong>仅排除 target（经典 BPR）</strong></td>
+      <td>0.3889</td><td>0.2451</td><td>0.2198</td><td>0.0967</td>
+      <td>~29 min<br>(122 ep, best@112)</td>
+      <td><span class="tag bad">REJECTED</span></td>
+    </tr>
+    <tr>
+      <td><strong>E4</strong></td>
+      <td><strong>FFN 容量</strong></td>
+      <td>ffn_hidden_dim: 64 → <strong>256</strong>（4× expansion）</td>
+      <td><strong>0.4012</strong></td><td><strong>0.2598</strong></td><td><strong>0.2349</strong></td><td>0.097</td>
+      <td>~47 min<br>(179 ep, best@169)</td>
+      <td><span class="tag warn">PARTIAL</span></td>
+    </tr>
+    <tr>
+      <td><strong>E5</strong></td>
+      <td><strong>模型深度</strong></td>
+      <td>num_blocks: 2 → <strong>4</strong>（继续 E4 成功方向、换维度）</td>
+      <td><strong>0.4133</strong></td><td><strong>0.2656</strong></td><td><strong>0.2387</strong></td><td>0.0615</td>
+      <td>~5h<br>(198 ep, best@188)</td>
+      <td><span class="tag warn">PARTIAL ⭐⭐</span></td>
+    </tr>
+    <tr style="background:#fffbe6;">
+      <td><strong>E6</strong></td>
+      <td><strong>正则化</strong></td>
+      <td>Adam → <strong>AdamW</strong> + weight_decay=1e-4（缓解过拟合）</td>
+      <td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
+      <td><span class="tag warn">PENDING</span></td>
+    </tr>
+    <tr style="background:#e7f5ff; font-weight: 600;">
+      <td>📌</td><td>论文 GRU4Rec 参考</td><td>—</td>
+      <td>0.4106</td><td>0.2584</td><td>—</td><td>—</td><td>—</td><td>—</td>
+    </tr>
+    <tr style="background:#e7f5ff; font-weight: 600;">
+      <td>🎯</td><td>论文 SASRec 参考（D4 目标）</td><td>—</td>
+      <td><strong>0.4696</strong></td><td><strong>0.3156</strong></td><td>—</td><td>—</td><td>—</td><td>—</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>E1 — Baseline</h3>
+<table>
+  <tbody>
+    <tr><th style="width:8rem;">实验点</th><td>— (起点，无改动)</td></tr>
+    <tr><th>假设</th><td>按 D1–D17 默认 config 能复现接近 SASRec 的水平。</td></tr>
+    <tr><th>参数</th><td>dropout=0.5，负采样排除整个 user 历史，d=64，L=2，max_len=50，Adam lr=1e-3</td></tr>
+    <tr><th>命令</th><td><code>python train.py</code></td></tr>
+    <tr><th>结果</th><td>跑到 epoch 38 时 val_hr10=0.386 / val_ndcg10=0.223 / val_mrr=0.192，已 plateau 数 epoch；用户提前 kill 以避开"等到 EarlyStopping 才发现差太多"的浪费。</td></tr>
+    <tr><th>结论</th><td><span class="tag bad">BASELINE_FAIL</span> 未达 D4：HR@10 0.386 远低于 SASRec 0.4696，<strong>甚至低于 GRU4Rec 0.4106</strong>。瓶颈是什么？用户敏锐指出"dropout=0.5 对 24K 可学习网络太狠"，进入 <strong>E2</strong>。</td></tr>
+  </tbody>
+</table>
+
+<h3>E2 — 实验点：dropout</h3>
+<table>
+  <tbody>
+    <tr><th style="width:8rem;">假设</th><td>模型可学习"网络层"只 24K 参数（item embedding 97%），dropout 0.5 等于关掉一半网络信号、对小网络过狠 → 改 0.2 能缓解。</td></tr>
+    <tr style="background:#fef2f2;"><th>改前 (E1)</th><td><strong>dropout = 0.5</strong> · HR@10=val 0.386 · NDCG@10=val 0.223 · MRR=val 0.192 · train_loss≈0.40</td></tr>
+    <tr style="background:#f0fdf4;"><th>改后 (E2)</th><td><strong>dropout = 0.2</strong> · HR@10=<strong>0.398</strong> · NDCG@10=<strong>0.254</strong> · MRR=<strong>0.229</strong> · train_loss=<strong>0.0421</strong> · 151 epoch（best @141）· 用时 35:41</td></tr>
+    <tr><th>delta</th><td>HR@10 <strong>+1.2%</strong> · NDCG@10 <strong>+14%</strong> · MRR <strong>+19%</strong> · train_loss <strong>0.40 → 0.04</strong>（猛降）</td></tr>
+    <tr><th>结论</th><td><span class="tag warn">PARTIAL</span> 方向对——三项指标都涨了；但量级远不够，仍差 SASRec ~17%，HR@10 也没追上 GRU4Rec。<strong>train_loss 从 0.40 暴降到 0.04 是典型过拟合信号</strong>（dropout 减小后模型有能力把训练集"背下来"，但泛化没跟上）。<strong>推断瓶颈在负采样太严</strong>——模型从未把 user 已交互 item 当 negative 学，loss 容易压到 0，进入 <strong>E3</strong>。</td></tr>
+  </tbody>
+</table>
+
+<h3>E3 — 实验点：负采样策略</h3>
+<table>
+  <tbody>
+    <tr><th style="width:8rem;">假设</th><td>去掉"排除 user 历史"后，模型被迫学到"用户已交互过的相似 item，也可能不是下一个 target"这种更细粒度的偏好——train_loss 不会那么快压到 0，泛化反而更好。</td></tr>
+    <tr style="background:#fef2f2;"><th>改前 (E2)</th><td>neg 采样 = <strong>排除整个 user 历史</strong> · HR@10=0.398 · NDCG@10=0.254 · MRR=0.229 · train_loss=0.0421</td></tr>
+    <tr style="background:#f0fdf4;"><th>改后 (E3)</th><td>neg 采样 = <strong>只排除当前 target（经典 BPR）</strong> · HR@10=<strong>0.389</strong> · NDCG@10=<strong>0.245</strong> · MRR=<strong>0.220</strong> · train_loss=<strong>0.0967</strong> · 122 epoch（best @112）· 用时 ~29 min</td></tr>
+    <tr><th>delta</th><td>HR@10 <strong>-2.3%</strong> · NDCG@10 <strong>-3.7%</strong> · MRR <strong>-4.0%</strong> · train_loss <strong>+130%</strong></td></tr>
+    <tr><th>代码改动</th><td><code>data.py · FMLPTrainDataset</code>: 删 <code>or neg in seen</code> 过滤；<code>__init__</code> 简化（不再为每 instance 存 seen 集合）</td></tr>
+    <tr><th>结论</th><td><span class="tag bad">REJECTED</span> <strong>假设错了，全线 -2 ~ -4% 下滑</strong>。<br>
+      <strong>验证的部分</strong>：train_loss 确实从 0.04 升到 0.10，说明经典 BPR 让模型"难训"。<br>
+      <strong>推翻的部分</strong>：「难训 → 泛化更好」这个推论不成立。<br>
+      <strong>真正解读</strong>：① user 历史只 ~7 item / 12101 items（0.06%），排除与否对<strong>负样本集合分布几乎无影响</strong>；② 但 BPR loss 对那 0.06% 的"难负样本"极敏感（neg &gt; pos 时数值大），导致 train_loss 拉高；③ 拉高 train_loss <strong>≠</strong> 改善泛化——E2 的"过拟合"判断错了。<br>
+      <strong>新认知</strong>：E2 已经是这套架构+超参的<strong>局部最优</strong>，真正瓶颈在别处（FFN 容量 / 初始化 / lr）。<strong>需要回滚 data.py 到 E2 版本</strong>，再进入 E4。<br>
+      <strong>已回滚</strong>（2026-05-25）：data.py + test_data.py 都恢复到 E2 状态，21/21 测试仍绿。</td></tr>
+  </tbody>
+</table>
+
+<h3>E4 — 实验点：FFN 容量</h3>
+<table>
+  <tbody>
+    <tr><th style="width:8rem;">假设</th><td>E2 是当前架构+超参的局部最优；瓶颈不在 dropout（E2→E3 证实）、不在负采样（E3 证伪）。换"容量维度"试：D16 我拍 ffn_hidden=64（d→d→d）是"轻量"先验，但 FFN 容量只 8K 参数，可能压抑了非线性表达。改 4d（256）让 FFN 容量 ×4。</td></tr>
+    <tr style="background:#fef2f2;"><th>改前 (E2)</th><td>ffn_hidden_dim = <strong>64</strong> · 总参数 24K（非 embed）· HR@10=0.398 · NDCG@10=0.254 · MRR=0.229 · train_loss=0.0421</td></tr>
+    <tr style="background:#f0fdf4;"><th>改后 (E4)</th><td>ffn_hidden_dim = <strong>256</strong> · 总参数 ~70K（非 embed）· HR@10=<strong>0.4012</strong> · NDCG@10=<strong>0.2598</strong> · MRR=<strong>0.2349</strong> · train_loss=<strong>0.097</strong> · 179 epoch（best @169）· 用时 ~47 min</td></tr>
+    <tr><th>delta</th><td>HR@10 <strong>+0.7%</strong> · NDCG@10 <strong>+2.1%</strong> · MRR <strong>+2.6%</strong> · train_loss <strong>+130%</strong>（0.04→0.10：FFN 更大反而更难训）</td></tr>
+    <tr><th>代码改动</th><td><code>configs/beauty_default.yaml</code> 单行：<code>ffn_hidden_dim: 64 → 256</code></td></tr>
+    <tr><th>结论</th><td><span class="tag warn">PARTIAL ⭐</span> <strong>方向对，<u>HR@10 首次过 0.40</u></strong>，超过 E2 baseline 但仍差 GRU4Rec 0.4106 ~3%、差 SASRec 0.4696 ~14%。E4 成为<strong>新 ⭐ best baseline</strong>。<br>
+      <strong>洞察</strong>：① train_loss 反升至 0.10——FFN 更大让训练更难，但泛化跟着涨，说明容量曾经是真瓶颈；② best epoch 从 141 推到 169，需要更多训练步数；③ 增益相对小（+0.7% HR@10），说明 FFN 不是唯一瓶颈。<br>
+      <strong>下一步</strong>：沿"加容量"成功方向继续，换"深度"维度——<strong>num_blocks 2 → 4</strong>（E5）。</td></tr>
+  </tbody>
+</table>
+
+<h3>E5 — 实验点：模型深度</h3>
+<table>
+  <tbody>
+    <tr><th style="width:8rem;">假设</th><td>E4 证明"加容量有用"，但 +0.7% 量级有限。换深度维度试：当前 L=2 个 FilterBlock，论文 §6 消融提到"L=16 仍有增益"，所以 L 偏小可能是另一瓶颈。改 L=4 双倍深度，每 block ~33K 参数（FFN=256），加深后总参数 ~150K（非 embed），仍只占总参的 16%。</td></tr>
+    <tr style="background:#fef2f2;"><th>改前 (E4 ⭐)</th><td>num_blocks = <strong>2</strong> · ffn_hidden=256 · HR@10=0.4012 · NDCG@10=0.2598 · MRR=0.2349 · train_loss=0.097</td></tr>
+    <tr style="background:#f0fdf4;"><th>改后 (E5 ⭐⭐)</th><td>num_blocks = <strong>4</strong> · ffn_hidden=256（不变）· HR@10=<strong>0.4133</strong> · NDCG@10=<strong>0.2656</strong> · MRR=<strong>0.2387</strong> · train_loss=<strong>0.0615</strong> · 198 epoch（best @188）· 用时 ~5h</td></tr>
+    <tr><th>delta</th><td>HR@10 <strong>+3.0%</strong>（迄今最大单次增益）· NDCG@10 <strong>+2.2%</strong> · MRR <strong>+1.6%</strong> · train_loss <strong>-37%</strong>（更深更易拟合）</td></tr>
+    <tr><th>代码改动</th><td><code>configs/beauty_default.yaml</code> 单行：<code>num_blocks: 2 → 4</code></td></tr>
+    <tr><th>结论</th><td><span class="tag warn">PARTIAL ⭐⭐</span> <strong>双重突破</strong>：HR@10 (0.4133) <strong>超过 GRU4Rec 0.4106</strong> +0.7% · NDCG@10 (0.2656) <strong>超过 GRU4Rec 0.2584</strong> +2.8%。<br>
+      仍差 SASRec 0.4696 ~12%（D4 未达成）。<br>
+      <strong>洞察</strong>：① 深度方向给出迄今最大增益（+3.0%）；② train_loss 反而从 0.097 降到 0.0615 说明更深模型对训练集拟合更好；③ best 在 epoch 188 已接近 max_epochs=200 上限，说明可能还有上涨空间但被截断；④ 中间快照（epoch 179）= 0.4118 与 final = 0.4133 差异极小，证明 val_mrr 接近 plateau。<br>
+      <strong>下一步</strong>：训练拟合度还在升高（train_loss 0.06 偏低），加正则化看能否进一步榨出泛化空间——<strong>E6 = AdamW + weight_decay=1e-4</strong>。</td></tr>
+  </tbody>
+</table>
+
+<h3>E6 — 实验点：正则化（AdamW + weight_decay）<span class="tag warn">PENDING</span></h3>
+<table>
+  <tbody>
+    <tr><th style="width:8rem;">假设</th><td>E5 train_loss=0.0615 仍偏低（vs 测试 HR@10=0.4133 差距明显），说明模型还在 over-fit 状态。加 weight_decay=1e-4 等 L2 正则化，让网络参数（FFN/W/LN）受约束，可能让测试集泛化更稳，再榨出 0.5-2% HR@10。论文未明示 optimizer 选 Adam 还是 AdamW（仅说"Adam"），weight_decay 默认 0，加上 1e-4 是工程常规。</td></tr>
+    <tr style="background:#fef2f2;"><th>改前 (E5 ⭐⭐)</th><td>optim = <strong>Adam(lr=1e-3)</strong> · HR@10=0.4133 · NDCG@10=0.2656 · MRR=0.2387 · train_loss=0.0615</td></tr>
+    <tr style="background:#f0fdf4;"><th>改后 (E6)</th><td>optim = <strong>AdamW(lr=1e-3, weight_decay=1e-4)</strong> · 其余不变 · 待跑</td></tr>
+    <tr><th>代码改动</th><td><code>lit_module.py · configure_optimizers</code> 改为 AdamW + 增加 weight_decay 超参（默认 1e-4）。</td></tr>
+    <tr><th>预测</th><td>train_loss 升至 ~0.10-0.15（更受约束），HR@10 ≥ 0.42 → weight_decay 有效；HR@10 &lt; 0.41 → 过拟合不是当前主要瓶颈。训练时间相同（~5h，因为算 forward 不变）。</td></tr>
+    <tr><th>命令</th><td><code>python train.py &gt; /tmp/fmlp_training_wd.log 2&gt;&amp;1 &amp;</code></td></tr>
+    <tr><th>结论</th><td><em>跑完后填</em></td></tr>
+  </tbody>
+</table>
+
+<h2>4. Claude 错误/卡点收录（事后做 agent 化设计的金矿）</h2>
+
+<p>每次 Claude 犯错就在这里追加一条。格式：</p>
+
+<pre><code>### [日期] 卡点简述
+- 场景：当时在做什么
+- 错误表现：Claude 具体的输出 / 行为 / 跳步
+- 根因猜测：是 prompt 缺失？工具缺失？模型能力？还是任务本身没拆好？
+- 应对：人怎么纠正的
+- agent 化提示：如果要避免这类问题再发生，自动化系统需要什么？</code></pre>
+
+<h3>[2026-05-24] 浮点数比较用 == 而非 abs(diff)&lt;eps（TDD 工具型踩坑）</h3>
+<ul>
+  <li><strong>场景</strong>：写 <code>test_bpr_loss_equals_ln2_when_equal</code> 时用 <code>assert bpr_loss(...).item() == math.log(2)</code> 严格比较，结果 PyTorch float32（0.6931471824645996）vs Python double（0.6931471805599453）差 ~2e-9，<strong>测试 fail</strong></li>
+  <li><strong>错误归属</strong>：测试 bug，不是实现 bug。<strong>实现是对的</strong>，被错误测试冤枉。</li>
+  <li><strong>根因</strong>：Claude 写浮点测试时偷懒用 ==，没有遵循"float 比较必须用容差"的常识。</li>
+  <li><strong>应对</strong>：改为 <code>abs(a - b) &lt; 1e-6</code>，再跑通过。</li>
+  <li><strong>agent 化提示</strong>：
+    <ul>
+      <li><strong>这正是 TDD 的额外价值</strong>——它暴露了测试本身的草率。如果先写实现再写测试，会下意识用 <code>torch.allclose</code> 抄过去，反而不会暴露这种思维盲点。</li>
+      <li>复现型 agent 在生成测试代码时，应有 lint 规则：浮点 tensor 比较必须用 <code>torch.allclose</code> 或 <code>abs(... - ...) &lt; tol</code>，禁 ==</li>
+      <li>对偏好用 <code>pytest.approx</code> 的项目可以引入它，但本项目暂不引入新依赖</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>[2026-05-24] conda 半初始化状态：python/pip 在 PATH 但 <code>activate</code> 不可用</h3>
+<ul>
+  <li><strong>场景</strong>：fingerprint 后发现 <code>which python</code> = <code>~/miniforge3/bin/python</code>（base env），跑 <code>conda activate fmlp-rec</code> 报 <code>CondaError: Run 'conda init' before 'conda activate'</code></li>
+  <li><strong>根因</strong>：miniforge 安装时只在 PATH 加了 <code>miniforge3/bin</code>，<strong>没</strong>跑 <code>conda init zsh</code>。结果是：
+    <ul>
+      <li><code>python</code> / <code>pip</code> 命令能用（指向 base env）</li>
+      <li><code>conda</code> 命令本身能用（base 里有）</li>
+      <li>但 <code>conda activate</code> <strong>是 shell function 不是真 binary</strong>，需要 <code>conda init &lt;shell&gt;</code> 写进 rc 文件才能用</li>
+    </ul>
+  </li>
+  <li><strong>叠加效应</strong>：用户以为 activate 成功，<code>pip install</code> 装到 base env；Claude 以为环境隔离正确，进入后续阶段；TDD 跑测试才暴露。<strong>这是上一条"误判 env 激活"卡点的根因</strong>。</li>
+  <li><strong>应对</strong>：<code>conda init zsh && source ~/.zshrc</code>，会写一段约 14 行的 init 代码块到 <code>~/.zshrc</code>。后续 activate 即可用。</li>
+  <li><strong>agent 化提示</strong>：
+    <ul>
+      <li>"conda 装好了" ≠ "conda activate 能用"。复现型 agent 在 D15 这种"依赖隔离"决策落地后，<strong>第一件事应该是验证 activate 链路通畅</strong>（试 activate 一个临时 env），而不是直接让用户 pip install。</li>
+      <li>更稳：让 agent 提供"environment fingerprint"标准命令包：<code>which conda && conda --version && conda activate <em>tmp</em> && which python && conda deactivate</code>，一键诊断 init 状态。</li>
+      <li>这条和上一条合在一起，揭示 Runner / Coder agent 必须有 <strong>pre-flight env check</strong> 阶段，否则后续所有"训练失败/包找不到"都会被错误归因到代码。</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>[2026-05-24] 误判 conda env 已激活，导致依赖装错 env</h3>
+<ul>
+  <li><strong>场景</strong>：用户按 D15 跑 <code>conda create -n fmlp-rec ... && conda activate fmlp-rec && pip install -e ".[dev]"</code>，paste 给我的输出显示 <code>Successfully installed ... fmlp-rec-0.1.0</code>，shell prompt 末尾是 <code>(cuiyunlong_requirement)$</code>。Claude 确认装好，进入后续步骤。</li>
+  <li><strong>错误表现</strong>：到 TDD 阶段 Claude 用 <code>~/miniforge3/envs/fmlp-rec/bin/pytest</code> 跑测试，报 No such file or directory；<code>pip list</code> 显示 fmlp-rec env 内只有 pip/setuptools。<strong>之前的 <code>pip install</code> 实际装到了 base 或系统 Python</strong>。</li>
+  <li><strong>根因</strong>：
+    <ol>
+      <li>用户 shell prompt 里的 <code>(cuiyunlong_requirement)</code> 是 <strong>git 分支名</strong>（zsh git plugin 输出），<strong>不是 conda env 前缀</strong>。conda env 激活时前缀通常是 <code>(env-name)</code> 出现在最左侧。</li>
+      <li>Claude 看到括号里有名字就默认是 conda env 激活了，<strong>从未要求 fingerprint 验证</strong>。</li>
+      <li>用户也没注意到——shell prompt 视觉上确实有歧义。</li>
+    </ol>
+  </li>
+  <li><strong>应对</strong>：让用户跑 <code>echo $CONDA_DEFAULT_ENV; which python</code> 确认真实环境，重新 activate + 重装。</li>
+  <li><strong>agent 化提示（重要）</strong>：
+    <ul>
+      <li><strong>绝不能从 shell prompt 推断 conda env 激活状态</strong>。prompt 可能被 git plugin / starship / oh-my-zsh / spaceship 等覆盖，括号里的内容来源不可信。</li>
+      <li>正确做法：每次执行 env-dependent 命令前，强制 fingerprint：
+        <pre><code>echo "env: $CONDA_DEFAULT_ENV"
+which python
+which pip</code></pre>
+      </li>
+      <li>更进一步：复现型 agent 应当<strong>始终使用 env-bin 的绝对路径</strong>（如 <code>~/miniforge3/envs/fmlp-rec/bin/python</code>）而不是依赖 PATH 解析，规避激活状态歧义。</li>
+      <li>这条对未来的 Runner agent 设计是<strong>硬约束</strong>：<code>activate</code> 不是验证手段，<code>which</code> + 实际跑一个 fingerprint import 才是。</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>[2026-05-24] 擅自创建 README.md（违反自己的全局规则）</h3>
+<ul>
+  <li><strong>场景</strong>：建 <code>fmlp-rec/</code> 骨架时，Claude 主动写了一份 README.md，内容是「项目说明 + pipeline 跑法 + 目标指标 + 指向 journey.html 的链接」</li>
+  <li><strong>错误表现</strong>：
+    <ol>
+      <li>用户从未要求写 README，Claude 自己觉得"项目得有 README"就写了</li>
+      <li>内容大量重复 journey.html 里已经固化的 D4 / D9 / 数据集表，<strong>形成双份文档</strong>，未来必然漂移</li>
+      <li>当前 stage 任何代码都没写，README 描述的 pipeline 全是空头支票</li>
+    </ol>
+  </li>
+  <li><strong>根因</strong>：Claude 的<strong>全局规则</strong>（<code>~/.claude/CLAUDE.md</code> 上层）明确写着 <em>"NEVER create documentation files (*.md) or README files unless explicitly requested by the User"</em>——规则存在但在执行流中被忽略。说明 system-prompt 级的"never"指令<strong>对长流程任务的约束力不可靠</strong>。</li>
+  <li><strong>应对</strong>：用户立即拒绝；Claude 修 <code>pyproject.toml</code> 去掉 <code>readme = "README.md"</code> 字段；这条卡点记入档案。</li>
+  <li><strong>agent 化提示（重要）</strong>：
+    <ul>
+      <li>"禁创建 *.md 文件" 这种<strong>否定规则</strong>必须用 <strong>PreToolUse Hook 机械拦截</strong>（match Write/Edit + path 含 .md + 路径不在白名单），不能只靠 prompt</li>
+      <li>更深层：Claude 有<strong>"项目仪式感"惯性</strong>——遇到新项目就想搞 README / LICENSE / CONTRIBUTING。这种惯性来自训练数据中"标准开源项目长这样"的分布偏置，<strong>对内部实验仓库是负价值</strong>，必须主动反制</li>
+      <li>具体到 RecAgent：可以在 <code>.claude/settings.json</code> 加一条 PreToolUse Hook，匹配 <code>fmlp-rec/**/*.md</code> 写入直接 deny；类似规则可推广到所有 <code>experiments/</code> 子项目</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>[2026-05-24] Read 工具读 PDF 报 <code>pdftoppm is not installed</code>，但 shell 里 <code>which pdftoppm</code> 能找到</h3>
+<ul>
+  <li><strong>场景</strong>：用户已 <code>brew install poppler</code>，<code>which pdftoppm</code> 返回 <code>/opt/homebrew/bin/pdftoppm</code>，但 Claude 调 Read 读 PDF 仍报 "pdftoppm is not installed. Install poppler-utils ..."</li>
+  <li><strong>错误表现</strong>：Read 工具的子进程没继承 shell 的 PATH，找不到 <code>/opt/homebrew/bin</code>（macOS Apple Silicon 的 Homebrew 默认路径，<strong>不在</strong>系统 <code>/usr/bin</code> 里）</li>
+  <li><strong>根因猜测</strong>：Claude Code harness 中 Read 工具调用 PDF 渲染时使用的 PATH 大概率是最小化 <code>/usr/bin:/bin</code>，没把 brew 路径注入。这是 harness bug，不是用户配置问题。</li>
+  <li><strong>应对</strong>：放弃 Read 工具直读 PDF，改用 <code>pdftotext -layout</code> 经 Bash 输出到 <code>/tmp</code>，再 sed/grep 阅读。损失图像信息（架构图），但论文文本足够复现使用。</li>
+  <li><strong>agent 化提示</strong>：
+    <ul>
+      <li>复现型 agent 应在启动时检测 <code>pdftoppm</code>、<code>pdftotext</code>、<code>git</code> 等关键工具的可用性，<strong>报告环境缺陷而不是中途暴毙</strong></li>
+      <li>更稳妥：把 PDF 处理封装为统一接口（图像优先，失败 fallback 到文本），不依赖 harness Read 工具的隐藏行为</li>
+      <li>如果将来要做 <code>document-specialist</code> 这种角色，PDF 处理路径必须自带 fallback 链</li>
+    </ul>
+  </li>
+</ul>
+
+<h2>5. 复盘清单（复现结束后填）</h2>
+
+<ul class="todo">
+  <li><label><input type="checkbox"> 整个复现耗时多少？人时 vs Claude 时</label></li>
+  <li><label><input type="checkbox"> 哪几个环节 Claude 一次过？哪几个反复返工？</label></li>
+  <li><label><input type="checkbox"> 如果再做一次同等任务，<strong>必须</strong>有自动化的环节是哪些？</label></li>
+  <li><label><input type="checkbox"> RecAgent_plan.md 的 9 个角色里，哪些是真的需要的？哪些可以合并？哪些纯粹是过度设计？</label></li>
+  <li><label><input type="checkbox"> <code>status_update.py</code> 这种"机械强制不变量"的设计，在实战中有用还是反而拖慢？</label></li>
+  <li><label><input type="checkbox"> 知识图谱（<code>graphify</code>）在复现过程中起到作用了吗？</label></li>
+</ul>
+
+<p class="meta-note">
+本文件 = 单文件 HTML（内嵌 CSS，无外部依赖）。可直接用浏览器打开。checkbox 勾选不会持久化（无 JS），需要标记完成请直接修改 HTML 源码（<code>&lt;input checked&gt;</code> + 在 <code>&lt;li&gt;</code> 上加 <code>class="done"</code>）。
+</p>
+
+<nav id="toc">
+  <div id="toc-header">
+    <span>📑 目录</span>
+    <span id="toc-toggle">[折叠]</span>
+  </div>
+  <ol id="toc-list"></ol>
+</nav>
+
+<script>
+(function () {
+  const headings = document.querySelectorAll('body h2, body h3');
+  const list = document.getElementById('toc-list');
+  const slugify = (t, i) => 'sec-' + i + '-' + (t || '').replace(/[^\w一-龥]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40).toLowerCase();
+  const links = [];
+
+  headings.forEach((h, i) => {
+    if (!h.id) h.id = slugify(h.textContent, i);
+    const li = document.createElement('li');
+    li.className = 'level-' + (h.tagName === 'H2' ? '2' : '3');
+    const a = document.createElement('a');
+    a.href = '#' + h.id;
+    a.textContent = h.textContent.replace(/\s+/g, ' ').trim().slice(0, 38);
+    a.title = h.textContent.trim();
+    li.appendChild(a);
+    list.appendChild(li);
+    links.push({ a: a, h: h });
+  });
+
+  // ScrollSpy via IntersectionObserver
+  const setActive = (id) => links.forEach(({ a }) => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+  const observer = new IntersectionObserver(
+    (entries) => {
+      const visible = entries.filter(e => e.isIntersecting).sort((a, b) => a.target.offsetTop - b.target.offsetTop);
+      if (visible.length) setActive(visible[0].target.id);
+    },
+    { rootMargin: '-10% 0px -75% 0px', threshold: 0 }
+  );
+  links.forEach(({ h }) => observer.observe(h));
+
+  // 折叠按钮
+  document.getElementById('toc-toggle').addEventListener('click', function () {
+    const toc = document.getElementById('toc');
+    toc.classList.toggle('collapsed');
+    this.textContent = toc.classList.contains('collapsed') ? '[展开]' : '[折叠]';
+  });
+})();
+</script>
+
+<script>
+/* ── 实验演进图：pan / zoom / custom tooltip ── */
+(function () {
+  const svg = document.getElementById('overview-chart');
+  if (!svg) return;
+  const wrap = document.getElementById('chart-wrap');
+  const tooltip = document.getElementById('chart-tooltip');
+
+  const DEFAULT_VB = { x: 0, y: 0, w: 800, h: 420 };
+  let vb = Object.assign({}, DEFAULT_VB);
+  const apply = () => svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+
+  // ── Pan ──
+  let drag = null;
+  svg.addEventListener('mousedown', (e) => {
+    drag = { sx: e.clientX, sy: e.clientY, vbx: vb.x, vby: vb.y };
+    svg.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!drag) return;
+    const rect = svg.getBoundingClientRect();
+    const scale = vb.w / rect.width;
+    vb.x = drag.vbx - (e.clientX - drag.sx) * scale;
+    vb.y = drag.vby - (e.clientY - drag.sy) * scale;
+    apply();
+  });
+  window.addEventListener('mouseup', () => { drag = null; svg.style.cursor = 'grab'; });
+
+  // ── Zoom (wheel, 鼠标位置为锚点) ──
+  svg.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = svg.getBoundingClientRect();
+    const fx = (e.clientX - rect.left) / rect.width;
+    const fy = (e.clientY - rect.top) / rect.height;
+    const mx = vb.x + fx * vb.w;
+    const my = vb.y + fy * vb.h;
+    const factor = e.deltaY > 0 ? 1.12 : 1 / 1.12;
+    vb.w = Math.max(80, Math.min(2400, vb.w * factor));
+    vb.h = Math.max(42, Math.min(1260, vb.h * factor));
+    vb.x = mx - fx * vb.w;
+    vb.y = my - fy * vb.h;
+    apply();
+  }, { passive: false });
+
+  // ── 按钮 ──
+  document.getElementById('chart-zoom-in').addEventListener('click', () => {
+    const cx = vb.x + vb.w / 2, cy = vb.y + vb.h / 2;
+    vb.w *= 0.8; vb.h *= 0.8;
+    vb.x = cx - vb.w / 2; vb.y = cy - vb.h / 2;
+    apply();
+  });
+  document.getElementById('chart-zoom-out').addEventListener('click', () => {
+    const cx = vb.x + vb.w / 2, cy = vb.y + vb.h / 2;
+    vb.w *= 1.25; vb.h *= 1.25;
+    vb.x = cx - vb.w / 2; vb.y = cy - vb.h / 2;
+    apply();
+  });
+  document.getElementById('chart-reset').addEventListener('click', () => {
+    vb = Object.assign({}, DEFAULT_VB); apply();
+  });
+
+  // ── 自定义 tooltip（替换原生 <title>）──
+  const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  document.querySelectorAll('#overview-chart g > title').forEach((titleEl) => {
+    const g = titleEl.parentNode;
+    const raw = titleEl.textContent;
+    // 第一行作为标题，其余作为正文
+    const [first, ...rest] = raw.split('\n');
+    const html = `<div class="tt-title">${escapeHtml(first)}</div>` +
+      rest.map(line => `<span class="tt-line">${escapeHtml(line)}</span>`).join('');
+    titleEl.remove();
+    g.setAttribute('data-tooltip', '');
+    g.addEventListener('mouseenter', () => {
+      tooltip.innerHTML = html;
+      tooltip.style.display = 'block';
+    });
+    g.addEventListener('mousemove', (e) => {
+      const rect = wrap.getBoundingClientRect();
+      const tw = tooltip.offsetWidth || 240;
+      const th = tooltip.offsetHeight || 80;
+      let x = e.clientX - rect.left + 14;
+      let y = e.clientY - rect.top + 14;
+      if (x + tw > rect.width - 8) x = e.clientX - rect.left - tw - 14;
+      if (y + th > rect.height - 8) y = e.clientY - rect.top - th - 14;
+      tooltip.style.left = Math.max(4, x) + 'px';
+      tooltip.style.top = Math.max(4, y) + 'px';
+    });
+    g.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+  });
+})();
+</script>
+
+</body>
+</html>

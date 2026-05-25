@@ -1,4 +1,5 @@
-"""FMLPRecLit: LightningModule wiring model + BPR loss + Adam + 99-neg eval metrics + early stop on val_mrr."""
+"""FMLPRecLit: LightningModule wiring model + BPR loss + AdamW + 99-neg eval metrics + early stop on val_mrr.
+   Plus IntermediateTestCallback for mid-training test-set probing (catches over-fitting collapse early)."""
 from __future__ import annotations
 
 import lightning.pytorch as pl
@@ -7,6 +8,36 @@ import torch
 from fmlp_rec.losses import bpr_loss
 from fmlp_rec.metrics import compute_ranks, hit_rate_at_k, mrr, ndcg_at_k
 from fmlp_rec.model import FMLPRec
+
+
+class IntermediateTestCallback(pl.Callback):
+    """每 N 个 epoch 在 val 结束后跑一次 test_dataloader，log test_mid_* 指标。
+       用途：捕捉 test 集崩盘（早期 over-fitting 信号），不影响 best ckpt 选择。"""
+
+    def __init__(self, every_n_epochs: int = 20):
+        super().__init__()
+        self.every_n_epochs = every_n_epochs
+
+    def on_validation_epoch_end(self, trainer, pl_module):
+        if trainer.sanity_checking:
+            return
+        if (trainer.current_epoch + 1) % self.every_n_epochs != 0:
+            return
+        test_dl = trainer.datamodule.test_dataloader()
+        ranks_list = []
+        was_training = pl_module.training
+        pl_module.eval()
+        with torch.no_grad():
+            for batch in test_dl:
+                batch = {k: v.to(pl_module.device) for k, v in batch.items()}
+                ranks_list.append(pl_module._batch_ranks(batch))
+        if was_training:
+            pl_module.train()
+        ranks = torch.cat(ranks_list)
+        for k in pl_module.topk:
+            pl_module.log(f"test_mid_hr{k}", hit_rate_at_k(ranks, k), prog_bar=(k == 10))
+            pl_module.log(f"test_mid_ndcg{k}", ndcg_at_k(ranks, k), prog_bar=False)
+        pl_module.log("test_mid_mrr", mrr(ranks), prog_bar=True)
 
 
 class FMLPRecLit(pl.LightningModule):
@@ -20,6 +51,7 @@ class FMLPRecLit(pl.LightningModule):
         dropout: float,
         learning_rate: float,
         topk: list[int],
+        weight_decay: float = 1e-4,
     ):
         super().__init__()
         self.save_hyperparameters()
@@ -61,4 +93,8 @@ class FMLPRecLit(pl.LightningModule):
         self.log(f"{prefix}_mrr", mrr(ranks), prog_bar=True)
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
+        return torch.optim.AdamW(
+            self.parameters(),
+            lr=self.hparams.learning_rate,
+            weight_decay=self.hparams.weight_decay,
+        )

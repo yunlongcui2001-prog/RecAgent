@@ -1,0 +1,107 @@
+{
+  "/Users/bytedance/project/RecAgent/knowledge/wiki/failure_modes/gradient_explosion.md": {
+    "mtime": 1778771857.2512033,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/wiki/failure_modes/overfitting_signals.md": {
+    "mtime": 1778771857.2513516,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/wiki/failure_modes/loss_divergence.md": {
+    "mtime": 1778771857.251274,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/wiki/architectures/seq_transformer.md": {
+    "mtime": 1778771857.2510798,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/wiki/architectures/mix_transformer.md": {
+    "mtime": 1778771857.2509382,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/wiki/architectures/moe_layer.md": {
+    "mtime": 1778771857.2510164,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/wiki/training_recipes/incremental_training.md": {
+    "mtime": 1778771857.251977,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/wiki/training_recipes/two_tower_baseline.md": {
+    "mtime": 1778771857.252173,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/wiki/hyperparameters/embedding_dim.md": {
+    "mtime": 1778771857.2516134,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/wiki/hyperparameters/attention_heads.md": {
+    "mtime": 1778771857.2514732,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/wiki/hyperparameters/batch_size.md": {
+    "mtime": 1778771857.2515442,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/wiki/hyperparameters/sequence_length.md": {
+    "mtime": 1778771857.2518125,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/wiki/hyperparameters/learning_rate.md": {
+    "mtime": 1778771857.2516885,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/hp_rules/model_width_depth.yaml": {
+    "mtime": 1778771857.249597,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/hp_rules/warmup_heuristics.yaml": {
+    "mtime": 1778771857.2496674,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/hp_rules/lr_bs_coupling.yaml": {
+    "mtime": 1778771857.2495291,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/hp_rules/gpu_memory_constraints.yaml": {
+    "mtime": 1778771857.249454,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/paper_insights/2025-moe-tuning.md": {
+    "mtime": 1778771857.2498538,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/paper_insights/2024-scaling-laws-rec.md": {
+    "mtime": 1778771857.249792,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/papers/2022-seq-fmlp.pdf": {
+    "mtime": 1779541960.7167785,
+    "ast_hash": "3ce1d74bc6d8e03b5f062bd023730785",
+    "semantic_hash": "3ce1d74bc6d8e03b5f062bd023730785"
+  },
+  "/Users/bytedance/project/RecAgent/knowledge/papers/2016-gru4rec.pdf": {
+    "mtime": 1778771857.2507408,
+    "ast_hash": "f3c980f74454063172d4b1edf61f8e30",
+    "semantic_hash": "f3c980f74454063172d4b1edf61f8e30"
+  }
+}

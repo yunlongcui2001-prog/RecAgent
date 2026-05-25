@@ -7,18 +7,20 @@ dataset:
 
 model:
   embed_dim: 64
-  ffn_hidden_dim: 64
-  num_blocks: 2
+  ffn_hidden_dim: 256
+  num_blocks: 4
   dropout: 0.2
 
 training:
   batch_size: 256
   learning_rate: 1.0e-3
-  optimizer: adam
+  weight_decay: 1.0e-4
+  optimizer: adamw
   max_epochs: 200
   early_stop_patience: 10
   early_stop_metric: val_mrr
   early_stop_mode: max
+  intermediate_test_every_n_epochs: 20
   seed: 42
 
 eval:

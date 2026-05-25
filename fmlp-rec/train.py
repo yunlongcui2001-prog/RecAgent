@@ -9,7 +9,7 @@ import yaml
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 
 from fmlp_rec.data import FMLPDataModule
-from fmlp_rec.lit_module import FMLPRecLit
+from fmlp_rec.lit_module import FMLPRecLit, IntermediateTestCallback
 
 
 def parse_args():
@@ -42,6 +42,7 @@ def main():
         ffn_hidden_dim=cfg["model"]["ffn_hidden_dim"],
         dropout=cfg["model"]["dropout"],
         learning_rate=cfg["training"]["learning_rate"],
+        weight_decay=cfg["training"].get("weight_decay", 0.0),
         topk=cfg["eval"]["topk"],
     )
 
@@ -56,6 +57,9 @@ def main():
             mode=cfg["training"]["early_stop_mode"],
             save_top_k=1,
             filename="best-{epoch}-{val_mrr:.4f}",
+        ),
+        IntermediateTestCallback(
+            every_n_epochs=cfg["training"].get("intermediate_test_every_n_epochs", 20),
         ),
     ]
 

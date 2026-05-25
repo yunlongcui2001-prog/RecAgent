@@ -34,12 +34,10 @@ RecAgent/
 
 ## 已集成 Skills
 
-
-| Skill                                | 作用                                                                                  | 来源                                                                                      | 装法                                                          |
-| ------------------------------------ | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| [graphify](skills/graphify/SKILL.md) | 把 `knowledge/` 下的 Markdown / YAML 聚合成可查询的知识图谱，支持 `query` / `explain` / `path` 三类图检索 | [safishamsi/graphify](https://github.com/safishamsi/graphify)                           | 仓库自带                                                        |
-| superpowers                          | Jesse Vincent 的核心 skills 套件：TDD、系统化 debug、头脑风暴、写/执行计划、子代理并行、代码审查等 20+ 个 skill       | [obra/superpowers](https://github.com/obra/superpowers)（通过 Anthropic 官方 marketplace 分发） | 需自行运行 `/plugin install superpowers@claude-plugins-official` |
-
+| Skill                             | 作用                                                                                                              | 来源                                                                                         | 装法                                                               |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| [graphify](skills/graphify/SKILL.md) | 把 `knowledge/` 下的 Markdown / YAML 聚合成可查询的知识图谱，支持 `query` / `explain` / `path` 三类图检索 | [safishamsi/graphify](https://github.com/safishamsi/graphify)                                   | 仓库自带                                                           |
+| superpowers                       | Jesse Vincent 的核心 skills 套件：TDD、系统化 debug、头脑风暴、写/执行计划、子代理并行、代码审查等 20+ 个 skill   | [obra/superpowers](https://github.com/obra/superpowers)（通过 Anthropic 官方 marketplace 分发） | 需自行运行 `/plugin install superpowers@claude-plugins-official` |
 
 > `.claude/settings.json` 里的 `enabledPlugins` 已声明本项目启用 superpowers——克隆后如未安装，Claude Code 会提示装。
 
@@ -71,13 +69,11 @@ RecAgent/
 
 ## 贡献知识
 
-
-| 内容类型                | 放在哪里                                       |
-| ------------------- | ------------------------------------------ |
-| 调参经验、架构笔记、故障记录      | `knowledge/wiki/<topic>/`                  |
+| 内容类型                               | 放在哪里                                     |
+| -------------------------------------- | -------------------------------------------- |
+| 调参经验、架构笔记、故障记录           | `knowledge/wiki/<topic>/`                  |
 | 可量化的调参规则（参数范围、缩放公式） | `knowledge/hp_rules/`                      |
-| 论文洞察                | `knowledge/paper_insights/YYYY-<topic>.md` |
-
+| 论文洞察                               | `knowledge/paper_insights/YYYY-<topic>.md` |
 
 通过 PR 合入，合入后重建知识图谱。
 
