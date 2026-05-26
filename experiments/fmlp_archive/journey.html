@@ -406,8 +406,14 @@
     <tr>
       <td class="num" style="background:#fff8c5;">D22 ⚙️</td>
       <td class="date">2026-05-25</td>
-      <td>optimizer Adam → <strong>AdamW</strong>，新增 <strong>weight_decay=1e-4</strong></td>
-      <td>E5 train_loss=0.0615 仍偏低 + test_hr10=0.4133 与论文 SASRec 0.4696 差 12%，提示 over-fit 仍是瓶颈之一。AdamW 是 Adam 的 decoupled weight decay 变体（PyTorch 标准），1e-4 是工程常规起手。论文未明示 optimizer 是 Adam 还是 AdamW（仅写 "Adam"），weight_decay 默认 0；加上属于工程级正则补强，符合 D9（论文未明确即可自主）。</td>
+      <td>optimizer Adam → <strong>AdamW</strong>，新增 <strong>weight_decay=1e-4</strong><br><span class="tag bad">D22 部分撤销</span></td>
+      <td>E5 train_loss=0.0615 仍偏低 + test_hr10=0.4133 与论文 SASRec 0.4696 差 12%，提示 over-fit 仍是瓶颈之一。AdamW 是 Adam 的 decoupled weight decay 变体（PyTorch 标准），1e-4 是工程常规起手。论文未明示 optimizer 是 Adam 还是 AdamW（仅写 "Adam"），weight_decay 默认 0；加上属于工程级正则补强，符合 D9（论文未明确即可自主）。<br><strong>E6 REJECTED</strong>：全线下滑 1-6%。<strong>结论</strong>：过拟合不是当前瓶颈，weight_decay 已回滚为 0；但保留 AdamW（wd=0 时与 Adam 等价）+ IntermediateTestCallback 机制（监控用，非常有价值）。</td>
+    </tr>
+    <tr>
+      <td class="num" style="background:#fff8c5;">D23 ⚙️</td>
+      <td class="date">2026-05-25</td>
+      <td>num_blocks 4 → <strong>6</strong>（沿 E5 成功方向再加深 50%）<br><span class="tag bad">D23 已撤销</span></td>
+      <td>E5 把 num_blocks 2→4 拿到迄今最大单次增益（+3.0% HR@10）。E6 证伪了"加正则化"假设。继续 E5 成功方向：再加深 50%（4→6 而非 4→8 是为控制时间成本与过拟合风险）。论文消融提到 L=16 仍有 trivial gain，所以 L=4 没到平台。<br><strong>E7 REJECTED</strong>：L=6 全线低于 L=4 (-2.5% HR@10)。<strong>论文 L=16 的消融趋势在我们 setup 下不成立</strong>，sweet spot 在 L=4。<strong>已回滚 num_blocks=4。</strong></td>
     </tr>
   </tbody>
 </table>
@@ -680,6 +686,57 @@ Prediction Layer:
 
 <h2>3.5 里程碑 (Milestones)</h2>
 
+<h3>M6 — 4 轮自主 loop 完成 · 最终复盘（D4 未达成） <span class="tag warn">2026-05-26</span></h3>
+
+<table>
+  <thead><tr><th>E#</th><th>变量</th><th>改动</th><th>delta HR@10</th><th>结论</th></tr></thead>
+  <tbody>
+    <tr><td>E4</td><td>FFN 容量</td><td>64 → 256</td><td>+0.7%</td><td><span class="tag warn">PARTIAL</span></td></tr>
+    <tr style="background:#fffbe6;"><td><strong>E5</strong></td><td><strong>num_blocks 深度</strong></td><td>2 → 4</td><td><strong>+3.0%</strong></td><td><span class="tag warn">PARTIAL ⭐⭐</span></td></tr>
+    <tr><td>E6</td><td>正则化 weight_decay</td><td>0 → 1e-4</td><td>-1.5%</td><td><span class="tag bad">REJECTED</span></td></tr>
+    <tr><td>E7</td><td>num_blocks 再加深</td><td>4 → 6</td><td>-2.5%</td><td><span class="tag bad">REJECTED</span></td></tr>
+  </tbody>
+</table>
+
+<h4>📊 最终 best baseline = E5</h4>
+<ul>
+  <li><strong>HR@10 = 0.4133</strong> · 超过 GRU4Rec 0.4106（+0.7%），未达 SASRec 0.4696（-12%）</li>
+  <li><strong>NDCG@10 = 0.2656</strong> · 超过 GRU4Rec 0.2584（+2.8%），未达 SASRec 0.3156（-16%）</li>
+  <li><strong>MRR = 0.2387</strong></li>
+  <li><strong>D4（架构忠实 + 跑出合理指标）部分达成</strong>——突破 GRU4Rec 但未追上 SASRec</li>
+</ul>
+
+<h4>🧭 4 轮发现的"维度地图"</h4>
+<table>
+  <thead><tr><th>维度</th><th>结论</th><th>证据</th></tr></thead>
+  <tbody>
+    <tr><td>dropout (0.5 → 0.2)</td><td>✅ 有效</td><td>E2: +1.2% HR@10</td></tr>
+    <tr><td>负采样（排除 user 历史 vs 经典 BPR）</td><td>❌ 排除历史更好</td><td>E3: -2.3%（推翻"过拟合"假说）</td></tr>
+    <tr><td>FFN hidden (64 → 256)</td><td>✅ 有效</td><td>E4: +0.7%</td></tr>
+    <tr><td>num_blocks 深度</td><td>✅ <strong>L=4 是 sweet spot</strong></td><td>E5 (L=4) +3.0% / E7 (L=6) -2.5%</td></tr>
+    <tr><td>weight_decay</td><td>❌ 反效果</td><td>E6: -1.5%（过拟合不是当前瓶颈）</td></tr>
+  </tbody>
+</table>
+
+<h4>🎯 距 SASRec 还差 12% 的可能原因</h4>
+<ol>
+  <li><strong>位置编码初始化</strong>：用了 PyTorch 默认 N(0,1)，可能偏大；论文未明示</li>
+  <li><strong>Filter W 复数初始化</strong>：我拍 0.02 标准差，论文未明示；其它值未试</li>
+  <li><strong>学习率 schedule</strong>：用 constant lr，没用 warmup / cosine annealing</li>
+  <li><strong>embed_dim</strong>：固定 64，论文消融说这是最佳，但与 dropout/FFN/L 联合搜索可能有更优组合</li>
+  <li><strong>max_seq_len</strong>：固定 50，没消融</li>
+  <li><strong>训练负样本数</strong>：BPR 1:1，论文也是 1:1；如换 sampled softmax 多负或可改善</li>
+</ol>
+
+<h4>💡 给后续 agent 的建议（如果做 RecAgent_plan.md 的自动化流水线）</h4>
+<ol>
+  <li><strong>每一轮 hypothesis 必须有"failure criterion"</strong>——pre-register"什么数字证明假设错"，否则容易 hindsight 解释</li>
+  <li><strong>中间 test 监控（E6 首创）非常有价值</strong>，应该是所有训练 callback 的默认</li>
+  <li><strong>系统资源监控（macOS App Nap / puppet / Defender）应该是 pre-flight check 的一部分</strong>——E7 慢 17× 完全是环境问题，不是模型问题</li>
+  <li><strong>用 caffeinate 包裹长训练</strong>——避免休眠和后台任务洪流（E7 受害）</li>
+  <li>论文消融趋势（如"L=16 仍有增益"）在不同 setup 下<strong>可能反转</strong>，不能盲信</li>
+</ol>
+
 <h3>M5 — 突破 GRU4Rec baseline（D4 仍未达成） <span class="tag warn">2026-05-25</span></h3>
 <ul>
   <li><strong>事件</strong>：E5 (num_blocks 2→4) 跑出 <strong>test_hr10=0.4133, test_ndcg10=0.2656</strong>，<strong>同时超过 GRU4Rec 论文 baseline</strong>（HR@10=0.4106, NDCG@10=0.2584）。</li>
@@ -871,10 +928,16 @@ test → 88 test batches (1.3s) + restore best ckpt
     <title>E4 → E5 · 改 num_blocks: 2 → 4 (双倍深度)&#10;HR@10: 0.4012 → 0.4133 (+3.0%, 迄今最大单次增益)&#10;结论: PARTIAL · 突破 GRU4Rec (0.4106)，仍差 SASRec 12%</title>
   </g>
 
-  <!-- E5 → E6 : 探索分支 (PENDING), AdamW + weight_decay 1e-4 -->
+  <!-- E5 → E6 : 失败分支 (REJECTED), AdamW + weight_decay 1e-4 -->
   <g>
-    <line x1="430" y1="201" x2="510" y2="201" stroke="#888" stroke-width="1.8" stroke-dasharray="4 4"/>
-    <title>E5 → E6 · 改 optim: Adam → AdamW(weight_decay=1e-4)&#10;状态: PENDING (训练中)</title>
+    <line x1="430" y1="201" x2="510" y2="210" stroke="#cf222e" stroke-width="1.8" stroke-dasharray="5 3"/>
+    <title>E5 → E6 · 改 optim: Adam → AdamW(weight_decay=1e-4)&#10;HR@10: 0.4133 → 0.4069 (-1.5%)&#10;结论: REJECTED (全线下滑 1-6%，过拟合不是瓶颈，回退到 E5)</title>
+  </g>
+
+  <!-- E5 → E7 : 失败分支 (REJECTED), num_blocks 4→6 -->
+  <g>
+    <line x1="430" y1="201" x2="590" y2="216" stroke="#cf222e" stroke-width="1.8" stroke-dasharray="5 3"/>
+    <title>E5 → E7 · 改 num_blocks: 4 → 6 (再加深 50%) + 回滚 weight_decay=0&#10;HR@10: 0.4133 → 0.4029 (-2.5%)&#10;结论: REJECTED (L=6 全线低于 L=4，sweet spot 在 L=4)</title>
   </g>
 
   <!-- ── 节点 ── -->
@@ -921,12 +984,20 @@ test → 88 test batches (1.3s) + restore best ckpt
     <title>E5 · PARTIAL · ⭐⭐ 当前 BEST BASELINE&#10;改动: num_blocks 2 → 4 (双倍深度)&#10;HR@10=0.4133 (+3.0% vs E4 · 突破 GRU4Rec 0.4106) | NDCG@10=0.2656 (突破 GRU4Rec 0.2584) | MRR=0.2387&#10;train_loss末=0.0615 | 198 epoch (best @188)&#10;仍差 SASRec 0.4696 ~12%</title>
   </g>
 
-  <!-- E6 (PENDING): x=510, y 占位 201 -->
+  <!-- E6 (REJECTED): HR=0.4069 → y=210, x=510 -->
   <g>
-    <circle cx="510" cy="201" r="8" fill="none" stroke="#888" stroke-width="2" stroke-dasharray="3 2"/>
-    <text x="510" y="223" font-family="-apple-system, sans-serif" font-size="11" fill="#888" text-anchor="middle" font-weight="600">E6</text>
-    <text x="510" y="183" font-family="-apple-system, sans-serif" font-size="10" fill="#888" text-anchor="middle">…</text>
-    <title>E6 · PENDING (训练中)&#10;改动: optim Adam → AdamW(weight_decay=1e-4)&#10;假设: E5 仍过拟合 (train_loss=0.06)，加正则化能再榨泛化&#10;预期: HR@10 ≥ 0.42 → weight_decay 有效</title>
+    <circle cx="510" cy="210" r="7" fill="#cf222e" stroke="white" stroke-width="2.5" opacity="0.7"/>
+    <text x="510" y="231" font-family="-apple-system, sans-serif" font-size="11" fill="#cf222e" text-anchor="middle" font-weight="700">E6</text>
+    <text x="510" y="192" font-family="-apple-system, sans-serif" font-size="10" fill="#cf222e" text-anchor="middle">0.4069</text>
+    <title>E6 · REJECTED · 已回退&#10;改动: optim Adam → AdamW(weight_decay=1e-4)&#10;HR@10=0.4069 (-1.5% vs E5) | NDCG@10=0.2540 (-4.4%) | MRR=0.2256 (-5.5%)&#10;train_loss末=0.0719 | 149 epoch (best @139)&#10;中间 test 单调上涨未崩盘 → 问题在 wd 本身&#10;结论: 过拟合不是当前瓶颈，wd 反而剥夺必要容量</title>
+  </g>
+
+  <!-- E7 (REJECTED): HR=0.4029 → y=216, x=590 -->
+  <g>
+    <circle cx="590" cy="216" r="7" fill="#cf222e" stroke="white" stroke-width="2.5" opacity="0.7"/>
+    <text x="590" y="237" font-family="-apple-system, sans-serif" font-size="11" fill="#cf222e" text-anchor="middle" font-weight="700">E7</text>
+    <text x="590" y="198" font-family="-apple-system, sans-serif" font-size="10" fill="#cf222e" text-anchor="middle">0.4029</text>
+    <title>E7 · REJECTED · 已回退&#10;改动: num_blocks 4 → 6 (再加深 50%) + 回滚 wd=0&#10;HR@10=0.4029 (-2.5% vs E5) | NDCG@10=0.2525 (-4.9%) | MRR=0.2249 (-5.8%)&#10;train_loss末=0.103 | 138 epoch (best @128)&#10;结论: L=4 是 sweet spot，加深到 L=6 反而退化</title>
   </g>
 
   <!-- ── 图例 (顶部) ── -->
@@ -1009,12 +1080,21 @@ test → 88 test batches (1.3s) + restore best ckpt
       <td>~5h<br>(198 ep, best@188)</td>
       <td><span class="tag warn">PARTIAL ⭐⭐</span></td>
     </tr>
-    <tr style="background:#fffbe6;">
+    <tr>
       <td><strong>E6</strong></td>
       <td><strong>正则化</strong></td>
       <td>Adam → <strong>AdamW</strong> + weight_decay=1e-4（缓解过拟合）</td>
-      <td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
-      <td><span class="tag warn">PENDING</span></td>
+      <td>0.4069</td><td>0.2540</td><td>0.2256</td><td>0.0719</td>
+      <td>~3h<br>(149 ep, best@139)</td>
+      <td><span class="tag bad">REJECTED</span></td>
+    </tr>
+    <tr>
+      <td><strong>E7</strong></td>
+      <td><strong>模型深度+</strong></td>
+      <td>num_blocks: 4 → <strong>6</strong>（继续 E5 成功方向 + 回滚 wd）</td>
+      <td>0.4029</td><td>0.2525</td><td>0.2249</td><td>0.103</td>
+      <td>~17h <small>(含 puppet 拖速)</small><br>(138 ep, best@128)</td>
+      <td><span class="tag bad">REJECTED</span></td>
     </tr>
     <tr style="background:#e7f5ff; font-weight: 600;">
       <td>📌</td><td>论文 GRU4Rec 参考</td><td>—</td>
@@ -1096,16 +1176,31 @@ test → 88 test batches (1.3s) + restore best ckpt
   </tbody>
 </table>
 
-<h3>E6 — 实验点：正则化（AdamW + weight_decay）<span class="tag warn">PENDING</span></h3>
+<h3>E6 — 实验点：正则化（AdamW + weight_decay）</h3>
 <table>
   <tbody>
     <tr><th style="width:8rem;">假设</th><td>E5 train_loss=0.0615 仍偏低（vs 测试 HR@10=0.4133 差距明显），说明模型还在 over-fit 状态。加 weight_decay=1e-4 等 L2 正则化，让网络参数（FFN/W/LN）受约束，可能让测试集泛化更稳，再榨出 0.5-2% HR@10。论文未明示 optimizer 选 Adam 还是 AdamW（仅说"Adam"），weight_decay 默认 0，加上 1e-4 是工程常规。</td></tr>
     <tr style="background:#fef2f2;"><th>改前 (E5 ⭐⭐)</th><td>optim = <strong>Adam(lr=1e-3)</strong> · HR@10=0.4133 · NDCG@10=0.2656 · MRR=0.2387 · train_loss=0.0615</td></tr>
-    <tr style="background:#f0fdf4;"><th>改后 (E6)</th><td>optim = <strong>AdamW(lr=1e-3, weight_decay=1e-4)</strong> · 其余不变 · 待跑</td></tr>
-    <tr><th>代码改动</th><td><code>lit_module.py · configure_optimizers</code> 改为 AdamW + 增加 weight_decay 超参（默认 1e-4）。</td></tr>
-    <tr><th>预测</th><td>train_loss 升至 ~0.10-0.15（更受约束），HR@10 ≥ 0.42 → weight_decay 有效；HR@10 &lt; 0.41 → 过拟合不是当前主要瓶颈。训练时间相同（~5h，因为算 forward 不变）。</td></tr>
-    <tr><th>命令</th><td><code>python train.py &gt; /tmp/fmlp_training_wd.log 2&gt;&amp;1 &amp;</code></td></tr>
-    <tr><th>结论</th><td><em>跑完后填</em></td></tr>
+    <tr style="background:#f0fdf4;"><th>改后 (E6)</th><td>optim = <strong>AdamW(lr=1e-3, weight_decay=1e-4)</strong> · 其余不变 · HR@10=<strong>0.4069</strong> · NDCG@10=<strong>0.2540</strong> · MRR=<strong>0.2256</strong> · train_loss=<strong>0.0719</strong> · 149 epoch（best @139）· 用时 ~3h</td></tr>
+    <tr><th>delta</th><td>HR@10 <strong>-1.5%</strong> · NDCG@10 <strong>-4.4%</strong> · MRR <strong>-5.5%</strong> · train_loss <strong>+17%</strong>（wd 确实在约束）</td></tr>
+    <tr><th>中间 test 演变（每 20 epoch 1 次）</th><td>ep20=0.314 → ep40=0.361 → ep60=0.368 → ep80=0.382 → ep100=0.387 → ep120=0.400 → ep140=0.407 · 单调上涨<strong>未崩盘</strong>，最终 final=0.407 与 test_mid 末值一致——所以"早期 over-fit"不存在。</td></tr>
+    <tr><th>结论</th><td><span class="tag bad">REJECTED</span> <strong>全线下滑 1-6%，假设根本错</strong>。<br>
+      <strong>新认知</strong>：① E5 的 train_loss=0.06 不是过拟合标志——加正则化反而剥夺必要容量；② weight_decay 让 train_loss 仅升 17%，泛化跌幅却更大（HR -1.5% / NDCG -4.4% / MRR -5.5%），不成比例；③ 中间 test 监控首次启用，提供 7 个数据点，确认<strong>训练过程健康</strong>，问题在 wd 本身。<br>
+      <strong>下一步</strong>：撤销 weight_decay（回滚到 wd=0），沿"加深"成功方向继续——<strong>E7 = num_blocks 4 → 6</strong>。</td></tr>
+  </tbody>
+</table>
+
+<h3>E7 — 实验点：模型深度（再加 50%）</h3>
+<table>
+  <tbody>
+    <tr><th style="width:8rem;">假设</th><td>E5 把 num_blocks 2→4 拿到迄今最大单次增益（HR@10 +3.0%）。论文 §6 消融提到 L=16 仍有 trivial gain，所以 L=4 可能还不到平台。继续加深到 L=6（不直接 4→8 是为了控制时间成本和过拟合风险）。同时回滚 E6 失败的 weight_decay（→ 0）。</td></tr>
+    <tr style="background:#fef2f2;"><th>改前 (E5 ⭐⭐)</th><td>num_blocks=<strong>4</strong>, wd=0, Adam · HR@10=0.4133 · NDCG@10=0.2656 · MRR=0.2387 · train_loss=0.0615</td></tr>
+    <tr style="background:#f0fdf4;"><th>改后 (E7)</th><td>num_blocks=<strong>6</strong>, wd=0 (回滚), AdamW · HR@10=<strong>0.4029</strong> · NDCG@10=<strong>0.2525</strong> · MRR=<strong>0.2249</strong> · train_loss=<strong>0.103</strong> · 138 epoch（best @128）· 用时 ~17h（含 macOS 休眠 + puppet 拖速）</td></tr>
+    <tr><th>delta</th><td>HR@10 <strong>-2.5%</strong> · NDCG@10 <strong>-4.9%</strong> · MRR <strong>-5.8%</strong> · train_loss <strong>+67%</strong></td></tr>
+    <tr><th>中间 test 演变（每 20 epoch 1 次）</th><td>ep20=0.312 → ep40=0.353 → ep60=0.369 → ep80=0.375 → ep100=0.386 → ep120=0.390 · 单调上涨未崩盘，但终点 0.390 远低于 E5 同期 ~0.40+</td></tr>
+    <tr><th>结论</th><td><span class="tag bad">REJECTED</span> <strong>L=6 全线低于 L=4，sweet spot 确认在 L=4</strong>。<br>
+      <strong>新认知</strong>：① 论文 §6 消融虽说 L=16 仍有 trivial gain，但<strong>那是"论文 setup"下，我们的复现里 L=4 就是最佳</strong>——可能与我们的预处理 / 负采样 / dropout / FFN=256 等组合相关；② train_loss 末 0.103 比 E5 的 0.0615 高 67%，更深网络反而难训——可能需要更小的 lr 或 warmup 才能让 L=6 收敛到位；③ best @epoch 128 vs E5 best @188，<strong>更深模型反而提前 plateau</strong>，反直觉。<br>
+      <strong>下一步</strong>：回滚 num_blocks 4，保留 E5 作为最终 best baseline。4 轮 loop 完成 → 见 M6 最终复盘。</td></tr>
   </tbody>
 </table>
 

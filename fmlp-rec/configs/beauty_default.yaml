@@ -14,7 +14,7 @@ model:
 training:
   batch_size: 256
   learning_rate: 1.0e-3
-  weight_decay: 1.0e-4
+  weight_decay: 0.0
   optimizer: adamw
   max_epochs: 200
   early_stop_patience: 10
